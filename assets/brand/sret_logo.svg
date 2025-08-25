@@ -1,0 +1,25 @@
+<!-- Sri Ramachandra Faculty of Engineering and Technology Official Logo -->
+<svg width="400" height="120" viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Red Triangle with Medical Symbol -->
+  <path d="M10 110 L70 20 L130 110 Z" fill="#C41E3A"/>
+  
+  <!-- Medical Caduceus Symbol -->
+  <g transform="translate(70, 35)">
+    <line x1="0" y1="0" x2="0" y2="40" stroke="white" stroke-width="2"/>
+    <circle cx="0" cy="5" r="3" fill="white"/>
+    <path d="M-8,10 Q0,15 8,10 Q0,20 -8,10" fill="none" stroke="white" stroke-width="1.5"/>
+    <path d="M8,20 Q0,25 -8,20 Q0,30 8,20" fill="none" stroke="white" stroke-width="1.5"/>
+    <line x1="-6" y1="8" x2="6" y2="8" stroke="white" stroke-width="1"/>
+    <line x1="-6" y1="32" x2="6" y2="32" stroke="white" stroke-width="1"/>
+  </g>
+  
+  <!-- University Name -->
+  <text x="150" y="35" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#1B4B8C">
+    SRI RAMACHANDRA
+  </text>
+  
+  <!-- Faculty Description -->
+  <text x="150" y="65" font-family="Arial, sans-serif" font-size="18" font-weight="600" fill="#1B4B8C">
+    FACULTY OF ENGINEERING AND TECHNOLOGY
+  </text>
+</svg>
