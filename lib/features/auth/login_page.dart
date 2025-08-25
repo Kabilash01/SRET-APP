@@ -384,19 +384,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {
-                            // Mock create account action
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Account creation coming soon!',
-                                  style: GoogleFonts.robotoSerif(),
-                                ),
-                                backgroundColor: const Color(0xFF0D2240),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
+                          onPressed: () => context.push('/signup'),
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: Size.zero,

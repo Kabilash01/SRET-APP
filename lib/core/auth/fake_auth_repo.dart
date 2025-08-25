@@ -1,4 +1,5 @@
 import 'dart:math';
+import '../../../features/auth/options.dart';
 
 class User {
   final String id;
@@ -119,6 +120,112 @@ class FakeAuthRepo {
     // Simulate network delay for password reset
     await Future.delayed(const Duration(milliseconds: 900));
     // In real implementation, this would send an actual reset email
+  }
+
+  /// TODO: Replace with real user registration functionality
+  /// ```dart
+  /// Future<void> register({
+  ///   required String name,
+  ///   required String empId,
+  ///   required String phone,
+  ///   required String email,
+  ///   required String password,
+  ///   String? deptCode,
+  ///   required StaffRole role,
+  /// }) async {
+  ///   final UserCredential userCredential = await FirebaseAuth.instance
+  ///       .createUserWithEmailAndPassword(email: email, password: password);
+  ///   
+  ///   await userCredential.user?.updateDisplayName(name);
+  ///   
+  ///   // Store additional user data in Firestore
+  ///   await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
+  ///     'name': name,
+  ///     'empId': empId,
+  ///     'phone': phone,
+  ///     'email': email,
+  ///     'deptCode': deptCode,
+  ///     'role': role.name,
+  ///     'createdAt': FieldValue.serverTimestamp(),
+  ///   });
+  /// }
+  /// ```
+  Future<void> register({
+    required String name,
+    required String empId,
+    required String phone,
+    required String email,
+    required String password,
+    String? deptCode,
+    required StaffRole role,
+  }) async {
+    // Simulate network delay for registration
+    await Future.delayed(const Duration(milliseconds: 900));
+    
+    // Simulate 5% failure rate
+    if (_random.nextInt(20) == 0) {
+      throw Exception('Registration failed');
+    }
+    
+    // Mock successful registration - create new user
+    _currentUser = User(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      email: email.toLowerCase(),
+      name: name,
+      photoUrl: null,
+    );
+    
+    // In real implementation, additional user data (empId, phone, deptCode, role) 
+    // would be stored in a database like Firestore
+  }
+
+  /// TODO: Replace with real account creation functionality
+  /// ```dart
+  /// Future<void> createAccount({
+  ///   required String fullName,
+  ///   required String employeeId,
+  ///   required String phoneNumber,
+  ///   required String email,
+  ///   required String password,
+  ///   required String department,
+  ///   required String role,
+  /// }) async {
+  ///   final UserCredential userCredential = await FirebaseAuth.instance
+  ///       .createUserWithEmailAndPassword(email: email, password: password);
+  ///   
+  ///   await userCredential.user?.updateDisplayName(fullName);
+  ///   
+  ///   // Store additional user data in Firestore
+  ///   await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
+  ///     'fullName': fullName,
+  ///     'employeeId': employeeId,
+  ///     'phoneNumber': phoneNumber,
+  ///     'email': email,
+  ///     'department': department,
+  ///     'role': role,
+  ///     'createdAt': FieldValue.serverTimestamp(),
+  ///   });
+  /// }
+  /// ```
+  Future<void> createAccount({
+    required String fullName,
+    required String employeeId,
+    required String phoneNumber,
+    required String email,
+    required String password,
+    required String department,
+    required String role,
+  }) async {
+    // Simulate network delay for account creation
+    await Future.delayed(const Duration(milliseconds: 900));
+    
+    // Simulate 5% failure rate
+    if (_random.nextInt(20) == 0) {
+      throw Exception('Account creation failed');
+    }
+    
+    // In real implementation, this would create an account in Firebase/backend
+    // For now, we just simulate the delay and success
   }
 
   User? get currentUser => _currentUser;
