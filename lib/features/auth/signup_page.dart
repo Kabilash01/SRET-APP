@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/auth/fake_auth_repo.dart';
-import '../shared/blurred_background.dart';
-import '../shared/glass_card.dart';
+import '../../theme/app_theme.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -136,26 +134,18 @@ class _SignUpPageState extends State<SignUpPage> {
     if (!_formKey.currentState!.validate()) return;
     if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please agree to Terms & Privacy Policy',
-            style: GoogleFonts.robotoSerif(),
-          ),
+        const SnackBar(
+          content: Text('Please agree to Terms & Privacy Policy'),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
     if (_selectedDepartment == null || _selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please select department and role',
-            style: GoogleFonts.robotoSerif(),
-          ),
+        const SnackBar(
+          content: Text('Please select department and role'),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -183,16 +173,8 @@ class _SignUpPageState extends State<SignUpPage> {
               children: [
                 const Icon(Icons.check_circle, color: Colors.white),
                 const SizedBox(width: 8),
-                Text(
-                  'Account created. Please sign in.',
-                  style: GoogleFonts.robotoSerif(),
-                ),
+                const Text('Account created. Please sign in.'),
               ],
-            ),
-            backgroundColor: const Color(0xFF0D2240),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
             ),
           ),
         );
@@ -203,13 +185,9 @@ class _SignUpPageState extends State<SignUpPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Account creation failed. Please try again.',
-              style: GoogleFonts.robotoSerif(),
-            ),
+          const SnackBar(
+            content: Text('Account creation failed. Please try again.'),
             backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -225,156 +203,143 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF7E6), // CREAM_BG
-      body: BlurredBackground(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: GlassCard(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Title
-                      Text(
-                        'Create account',
-                        style: GoogleFonts.robotoSerif(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF0D2240), // NAVY
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      
-                      const SizedBox(height: 32),
-                      
-                      // Full Name Field
-                      TextFormField(
-                        controller: _fullNameController,
-                        enabled: !_isLoading,
-                        keyboardType: TextInputType.name,
-                        autofillHints: const [AutofillHints.name],
-                        validator: _validateFullName,
-                        decoration: InputDecoration(
-                          labelText: 'Full Name',
-                          hintText: 'Enter your full name',
-                          prefixIcon: const Icon(Icons.person_outline),
-                          labelStyle: GoogleFonts.robotoSerif(),
-                          hintStyle: GoogleFonts.robotoSerif(),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Employee ID Field
-                      TextFormField(
-                        controller: _employeeIdController,
-                        enabled: !_isLoading,
-                        validator: _validateEmployeeId,
-                        decoration: InputDecoration(
-                          labelText: 'Employee ID',
-                          hintText: 'Enter your employee ID',
-                          prefixIcon: const Icon(Icons.badge_outlined),
-                          labelStyle: GoogleFonts.robotoSerif(),
-                          hintStyle: GoogleFonts.robotoSerif(),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Phone Number Field
-                      TextFormField(
-                        controller: _phoneController,
-                        enabled: !_isLoading,
-                        keyboardType: TextInputType.phone,
-                        autofillHints: const [AutofillHints.telephoneNumber],
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9 +-]')),
-                        ],
-                        validator: _validatePhone,
-                        decoration: InputDecoration(
-                          labelText: 'Phone Number',
-                          hintText: '+91 9876543210',
-                          prefixIcon: const Icon(Icons.phone_outlined),
-                          labelStyle: GoogleFonts.robotoSerif(),
-                          hintStyle: GoogleFonts.robotoSerif(),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Email Field
-                      TextFormField(
-                        controller: _emailController,
-                        enabled: !_isLoading,
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
-                        validator: _validateEmail,
-                        onChanged: (value) {
-                          // Auto-convert to lowercase
-                          if (value != value.toLowerCase()) {
-                            final selection = _emailController.selection;
-                            _emailController.value = TextEditingValue(
-                              text: value.toLowerCase(),
-                              selection: selection,
-                            );
-                          }
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          hintText: 'yourname@sret.edu.in',
-                          prefixIcon: const Icon(Icons.mail_outline),
-                          helperText: 'Must end with @sret.edu.in',
-                          labelStyle: GoogleFonts.robotoSerif(),
-                          hintStyle: GoogleFonts.robotoSerif(),
-                          helperStyle: GoogleFonts.robotoSerif(
-                            fontSize: 12,
-                            color: const Color(0xFF4B5563), // TEXT_SECONDARY
+      backgroundColor: AppTheme.sretBg,
+      body: Stack(
+        children: [
+          // Background with blurred blobs
+          Positioned.fill(child: AppTheme.backgroundBlobs),
+          
+          // Main content
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Container(
+                  decoration: AppTheme.liquidGlass,
+                  padding: const EdgeInsets.all(32),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Title
+                        Text(
+                          'Create account',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            color: AppTheme.sretPrimary,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Password Field
-                      TextFormField(
-                        controller: _passwordController,
-                        enabled: !_isLoading,
-                        obscureText: !_isPasswordVisible,
-                        autofillHints: const [AutofillHints.newPassword],
-                        validator: _validatePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          hintText: 'Enter your password',
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                          textAlign: TextAlign.center,
+                        ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
+                        
+                        const SizedBox(height: 32),
+                        
+                        // Full Name Field
+                        TextFormField(
+                          controller: _fullNameController,
+                          enabled: !_isLoading,
+                          keyboardType: TextInputType.name,
+                          autofillHints: const [AutofillHints.name],
+                          validator: _validateFullName,
+                          decoration: const InputDecoration(
+                            labelText: 'Full Name',
+                            hintText: 'Enter your full name',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                        ).animate().fadeIn(delay: 100.ms, duration: 600.ms).slideX(begin: -0.2),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Employee ID Field
+                        TextFormField(
+                          controller: _employeeIdController,
+                          enabled: !_isLoading,
+                          validator: _validateEmployeeId,
+                          decoration: const InputDecoration(
+                            labelText: 'Employee ID',
+                            hintText: 'Enter your employee ID',
+                            prefixIcon: Icon(Icons.badge_outlined),
+                          ),
+                        ).animate().fadeIn(delay: 200.ms, duration: 600.ms).slideX(begin: -0.2),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Phone Number Field
+                        TextFormField(
+                          controller: _phoneController,
+                          enabled: !_isLoading,
+                          keyboardType: TextInputType.phone,
+                          autofillHints: const [AutofillHints.telephoneNumber],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[0-9 +-]')),
+                          ],
+                          validator: _validatePhone,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone Number',
+                            hintText: '+91 9876543210',
+                            prefixIcon: Icon(Icons.phone_outlined),
+                          ),
+                        ).animate().fadeIn(delay: 300.ms, duration: 600.ms).slideX(begin: -0.2),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Email Field
+                        TextFormField(
+                          controller: _emailController,
+                          enabled: !_isLoading,
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          validator: _validateEmail,
+                          onChanged: (value) {
+                            // Auto-convert to lowercase
+                            if (value != value.toLowerCase()) {
+                              final selection = _emailController.selection;
+                              _emailController.value = TextEditingValue(
+                                text: value.toLowerCase(),
+                                selection: selection,
+                              );
+                            }
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            hintText: 'yourname@sret.edu.in',
+                            prefixIcon: Icon(Icons.mail_outline),
+                            helperText: 'Must end with @sret.edu.in',
+                          ),
+                        ).animate().fadeIn(delay: 400.ms, duration: 600.ms).slideX(begin: -0.2),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Password Field
+                        TextFormField(
+                          controller: _passwordController,
+                          enabled: !_isLoading,
+                          obscureText: !_isPasswordVisible,
+                          autofillHints: const [AutofillHints.newPassword],
+                          validator: _validatePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            hintText: 'Enter your password',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
+                            helperText: 'Minimum 6 characters',
                           ),
-                          helperText: 'Minimum 6 characters',
-                          labelStyle: GoogleFonts.robotoSerif(),
-                          hintStyle: GoogleFonts.robotoSerif(),
-                          helperStyle: GoogleFonts.robotoSerif(
-                            fontSize: 12,
-                            color: const Color(0xFF4B5563), // TEXT_SECONDARY
-                          ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 16),
+                        ).animate().fadeIn(delay: 500.ms, duration: 600.ms).slideX(begin: -0.2),
+                        
+                        const SizedBox(height: 16),
                       
                       // Confirm Password Field
                       TextFormField(
@@ -399,10 +364,8 @@ class _SignUpPageState extends State<SignUpPage> {
                               });
                             },
                           ),
-                          labelStyle: GoogleFonts.robotoSerif(),
-                          hintStyle: GoogleFonts.robotoSerif(),
                         ),
-                      ),
+                      ).animate().fadeIn(delay: 600.ms, duration: 600.ms).slideX(begin: -0.2),
                       
                       const SizedBox(height: 16),
                       
@@ -410,18 +373,14 @@ class _SignUpPageState extends State<SignUpPage> {
                       DropdownButtonFormField<String>(
                         value: _selectedDepartment,
                         isExpanded: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Department',
-                          prefixIcon: const Icon(Icons.school_outlined),
-                          labelStyle: GoogleFonts.robotoSerif(),
+                          prefixIcon: Icon(Icons.school_outlined),
                         ),
                         items: _departments.map((dept) {
                           return DropdownMenuItem(
                             value: '${dept['code']} — ${dept['name']}',
-                            child: Text(
-                              '${dept['code']} — ${dept['name']}',
-                              style: GoogleFonts.robotoSerif(),
-                            ),
+                            child: Text('${dept['code']} — ${dept['name']}'),
                           );
                         }).toList(),
                         onChanged: _isLoading ? null : (value) {
@@ -435,7 +394,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           }
                           return null;
                         },
-                      ),
+                      ).animate().fadeIn(delay: 700.ms, duration: 600.ms).slideX(begin: -0.2),
                       
                       const SizedBox(height: 16),
                       
@@ -443,18 +402,14 @@ class _SignUpPageState extends State<SignUpPage> {
                       DropdownButtonFormField<String>(
                         value: _selectedRole,
                         isExpanded: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Role',
-                          prefixIcon: const Icon(Icons.work_outline),
-                          labelStyle: GoogleFonts.robotoSerif(),
+                          prefixIcon: Icon(Icons.work_outline),
                         ),
                         items: _roles.map((role) {
                           return DropdownMenuItem(
                             value: role,
-                            child: Text(
-                              role,
-                              style: GoogleFonts.robotoSerif(),
-                            ),
+                            child: Text(role),
                           );
                         }).toList(),
                         onChanged: _isLoading ? null : (value) {
@@ -468,41 +423,35 @@ class _SignUpPageState extends State<SignUpPage> {
                           }
                           return null;
                         },
-                      ),
+                      ).animate().fadeIn(delay: 800.ms, duration: 600.ms).slideX(begin: -0.2),
                       
                       const SizedBox(height: 16),
                       
                       // Helper note
                       Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF9EC).withOpacity(0.7), // CREAM_SURFACE
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(0xFFE8E2D6), // DIVIDER
-                            width: 1,
-                          ),
+                        padding: const EdgeInsets.all(16),
+                        decoration: AppTheme.frostedGlass.copyWith(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.info_outline,
                               size: 16,
-                              color: Color(0xFF4B5563), // TEXT_SECONDARY
+                              color: AppTheme.sretTextSecondary,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'DEAN/VICE DEAN/HOD accounts require admin verification.',
-                                style: GoogleFonts.robotoSerif(
-                                  fontSize: 12,
-                                  color: const Color(0xFF4B5563), // TEXT_SECONDARY
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppTheme.sretTextSecondary,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ),
+                      ).animate().fadeIn(delay: 900.ms, duration: 600.ms).scale(begin: const Offset(0.8, 0.8)),
                       
                       const SizedBox(height: 16),
                       
@@ -519,7 +468,6 @@ class _SignUpPageState extends State<SignUpPage> {
                                   _agreeToTerms = value ?? false;
                                 });
                               },
-                              activeColor: const Color(0xFF0D2240), // NAVY
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -532,15 +480,14 @@ class _SignUpPageState extends State<SignUpPage> {
                               },
                               child: Text(
                                 'I agree to Terms & Privacy Policy',
-                                style: GoogleFonts.robotoSerif(
-                                  fontSize: 14,
-                                  color: const Color(0xFF4B5563), // TEXT_SECONDARY
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.sretTextSecondary,
                                 ),
                               ),
                             ),
                           ),
                         ],
-                      ),
+                      ).animate().fadeIn(delay: 1000.ms, duration: 600.ms).slideX(begin: -0.2),
                       
                       const SizedBox(height: 24),
                       
@@ -551,13 +498,6 @@ class _SignUpPageState extends State<SignUpPage> {
                           duration: const Duration(milliseconds: 150),
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _handleCreateAccount,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0D2240), // NAVY
-                              minimumSize: const Size(double.infinity, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
                             child: _isLoading
                                 ? const SizedBox(
                                     width: 20,
@@ -571,8 +511,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                   )
                                 : Text(
                                     'Create account',
-                                    style: GoogleFonts.robotoSerif(
-                                      fontSize: 16,
+                                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white,
                                     ),
@@ -596,30 +535,50 @@ class _SignUpPageState extends State<SignUpPage> {
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: Text(
-                              'Back to Sign in',
-                              style: GoogleFonts.robotoSerif(
-                                color: const Color(0xFF0D2240), // NAVY
+                              'Create account',
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Colors.white,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
                         ],
-                      ),
-                    ],
+                      ).animate().fadeIn(delay: 1100.ms, duration: 600.ms).scale(begin: const Offset(0.95, 0.95)),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Sign in link
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Already have an account? ',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.sretTextSecondary,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _isLoading ? null : () {
+                                context.go('/login');
+                              },
+                              child: Text(
+                                'Sign in',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.sretPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ).animate().fadeIn(delay: 1200.ms, duration: 600.ms).slideY(begin: 0.2),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            )
-                .animate()
-                .slideY(
-                  begin: 0.15, // Slide from y:+48
-                  end: 0,
-                  duration: 300.ms,
-                  curve: Curves.easeOut,
-                )
-                .fadeIn(duration: 300.ms, curve: Curves.easeOut),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
