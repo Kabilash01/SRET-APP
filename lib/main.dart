@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_router.dart';
 import 'theme/app_theme.dart';
+import 'theme/app_background.dart';
 
 void main() {
   runApp(const ProviderScope(child: SRETApp()));
@@ -19,6 +20,9 @@ class SRETApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => AppBackground(
+        child: child ?? const SizedBox(),
+      ),
     );
   }
 }

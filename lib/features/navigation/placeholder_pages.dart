@@ -8,78 +8,58 @@ class TimetablePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.sretBg,
-      body: Stack(
-        children: [
-          // Background gradient
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topLeft,
-                  radius: 2.0,
-                  colors: [
-                    Color(0x0A7A0E2A), // Burgundy 4%
-                    Color(0x05DFA06E), // Copper 2%
-                  ],
+      backgroundColor: Colors.transparent,
+      body: CustomScrollView(
+        slivers: [
+          // AppBar
+          SliverAppBar(
+            expandedHeight: 100,
+            floating: false,
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              background: FrostedGlass(
+                borderRadius: BorderRadius.zero,
+                opacity: 0.85,
+                child: Container(
+                  padding: const EdgeInsets.only(top: 60, left: 24, right: 24),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Timetable',
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          color: AppTheme.sretPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () {},
+                        icon: Icon(
+                          Icons.calendar_month,
+                          color: AppTheme.sretPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
           
-          CustomScrollView(
-            slivers: [
-              // AppBar
-              SliverAppBar(
-                expandedHeight: 100,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: FrostedGlass(
-                    borderRadius: BorderRadius.zero,
-                    opacity: 0.85,
-                    child: Container(
-                      padding: const EdgeInsets.only(top: 60, left: 24, right: 24),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Timetable',
-                            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                              color: AppTheme.sretPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            onPressed: () {},
-                            icon: Icon(
-                              Icons.calendar_month,
-                              color: AppTheme.sretPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+          // Content
+          SliverPadding(
+            padding: const EdgeInsets.all(24),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _ComingSoonCard(
+                  title: 'Weekly Timetable',
+                  description: 'View your complete class schedule for the week with interactive calendar.',
+                  icon: Icons.schedule,
                 ),
-              ),
-              
-              // Content
-              SliverPadding(
-                padding: const EdgeInsets.all(24),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _ComingSoonCard(
-                      title: 'Weekly Timetable',
-                      description: 'View your complete class schedule for the week with interactive calendar.',
-                      icon: Icons.schedule,
-                    ),
-                  ]),
-                ),
-              ),
-            ],
+              ]),
+            ),
           ),
         ],
       ),
@@ -412,6 +392,91 @@ class _ComingSoonCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class CalendarPage extends StatelessWidget {
+  const CalendarPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.sretBg,
+      body: Stack(
+        children: [
+          // Background gradient
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topLeft,
+                  radius: 2.0,
+                  colors: [
+                    Color(0x0A7A0E2A), // Burgundy 4%
+                    Color(0x05DFA06E), // Copper 2%
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          CustomScrollView(
+            slivers: [
+              // AppBar
+              SliverAppBar(
+                expandedHeight: 100,
+                floating: false,
+                pinned: true,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: FrostedGlass(
+                    borderRadius: BorderRadius.zero,
+                    opacity: 0.85,
+                    child: Container(
+                      padding: const EdgeInsets.only(top: 60, left: 24, right: 24),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Calendar',
+                            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                              color: AppTheme.sretPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () {},
+                            icon: Icon(
+                              Icons.today,
+                              color: AppTheme.sretPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Content
+              SliverPadding(
+                padding: const EdgeInsets.all(24),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _ComingSoonCard(
+                      title: 'Academic Calendar',
+                      description: 'View important dates, exams, holidays and academic events throughout the semester.',
+                      icon: Icons.calendar_month,
+                    ),
+                  ]),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

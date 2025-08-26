@@ -84,6 +84,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                path: '/calendar',
+                name: 'calendar',
+                builder: (context, state) => const nav.CalendarPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 path: '/inbox',
                 name: 'inbox',
                 builder: (context, state) => const nav.InboxPage(),

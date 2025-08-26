@@ -75,7 +75,7 @@ class _ForgotPasswordPageSretState extends State<ForgotPasswordPageSret> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.sretBg,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/schedule/schedule_providers.dart';
 import '../../theme/app_theme.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -17,86 +16,11 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  void _onDestinationSelected(int index) {
-    widget.child.goBranch(index);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final canAccessDept = ref.watch(canAccessDepartmentProvider);
-
-    // Build navigation destinations
-    final destinations = <NavigationDestination>[
-      const NavigationDestination(
-        icon: Icon(Icons.today_outlined),
-        selectedIcon: Icon(Icons.today),
-        label: 'Today',
-      ),
-      const NavigationDestination(
-        icon: Icon(Icons.schedule_outlined),
-        selectedIcon: Icon(Icons.schedule),
-        label: 'Timetable',
-      ),
-      const NavigationDestination(
-        icon: Icon(Icons.inbox_outlined),
-        selectedIcon: Icon(Icons.inbox),
-        label: 'Inbox',
-      ),
-    ];
-
-    // Add Dept tab only for authorized roles
-    if (canAccessDept) {
-      destinations.add(
-        const NavigationDestination(
-          icon: Icon(Icons.domain_outlined),
-          selectedIcon: Icon(Icons.domain),
-          label: 'Dept',
-        ),
-      );
-    }
-
-    // Always add Profile tab
-    destinations.add(
-      const NavigationDestination(
-        icon: Icon(Icons.person_outline),
-        selectedIcon: Icon(Icons.person),
-        label: 'Profile',
-      ),
-    );
-
     return Scaffold(
-      backgroundColor: AppTheme.sretBg,
+      backgroundColor: Colors.transparent,
       body: widget.child,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.sretSurface.withValues(alpha: 0.95),
-          border: Border(
-            top: BorderSide(
-              color: AppTheme.sretDivider,
-              width: 0.5,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.sretPrimary.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: NavigationBar(
-            selectedIndex: widget.child.currentIndex,
-            onDestinationSelected: _onDestinationSelected,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            surfaceTintColor: Colors.transparent,
-            indicatorColor: AppTheme.sretPrimary.withValues(alpha: 0.12),
-            destinations: destinations,
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          ),
-        ),
-      ),
     );
   }
 }

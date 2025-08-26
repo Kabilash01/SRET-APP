@@ -1,0 +1,3 @@
+# Placeholder for noise.png
+# This should be a 64px seamless monochrome noise tile
+# The AppleLiquidGlass component includes a fallback noise painter when this asset is missing

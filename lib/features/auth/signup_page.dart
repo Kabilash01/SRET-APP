@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/auth/fake_auth_repo.dart';
 import '../../theme/app_theme.dart';
+import '../shared/apple_liquid_glass.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -14,7 +15,18 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
+  fi                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}meController = TextEditingController();
   final _employeeIdController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
@@ -203,22 +215,16 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.sretBg,
-      body: Stack(
-        children: [
-          // Background with blurred blobs
-          Positioned.fill(child: AppTheme.backgroundBlobs),
-          
-          // Main content
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Container(
-                  decoration: AppTheme.liquidGlass,
-                  padding: const EdgeInsets.all(32),
-                  child: Form(
+      backgroundColor: Colors.transparent,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: AppleLiquidGlass(
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                child: Form(
                     key: _formKey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -578,7 +584,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
