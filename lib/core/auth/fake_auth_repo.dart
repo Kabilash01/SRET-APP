@@ -95,6 +95,29 @@ class FakeAuthRepo {
     return _currentUser;
   }
 
+  /// Mock email/password sign-in
+  Future<User?> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    // Simulate network delay
+    await Future.delayed(Duration(milliseconds: 800 + _random.nextInt(400)));
+    
+    // Simulate 10% failure rate
+    if (_random.nextInt(10) == 0) {
+      throw Exception('Invalid email or password');
+    }
+    
+    // Mock successful sign-in with the email provided
+    _currentUser = User(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      email: email,
+      name: email.split('@')[0].replaceAll('.', ' ').toUpperCase(),
+      photoUrl: null,
+    );
+    return _currentUser;
+  }
+
   /// TODO: Replace with real Firebase sign-out
   /// ```dart
   /// Future<void> signOut() async {

@@ -67,11 +67,14 @@ class _GoogleSignInPageState extends ConsumerState<GoogleSignInPage>
           _showCheckmark = true;
         });
         
-        // Wait for checkmark animation, then navigate
+        // Wait for checkmark animation
         await Future.delayed(const Duration(milliseconds: 500));
         
-        if (mounted) {
-          context.go('/home');
+        // Check auth state and navigate if needed
+        final authState = ref.read(authControllerProvider);
+        if (mounted && authState.value != null) {
+          // Force navigation if router redirect doesn't work
+          context.go('/today');
         }
       }
     } catch (e) {

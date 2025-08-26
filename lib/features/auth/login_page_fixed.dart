@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/auth/auth_controller.dart';
 import '../../theme/app_theme.dart';
 import '../shared/liquid_glass.dart';
 import '../shared/validators.dart';
 
-class LoginPageFixed extends StatefulWidget {
+class LoginPageFixed extends ConsumerStatefulWidget {
   const LoginPageFixed({super.key});
 
   @override
-  State<LoginPageFixed> createState() => _LoginPageFixedState();
+  ConsumerState<LoginPageFixed> createState() => _LoginPageFixedState();
 }
 
-class _LoginPageFixedState extends State<LoginPageFixed> {
+class _LoginPageFixedState extends ConsumerState<LoginPageFixed> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -52,31 +54,56 @@ class _LoginPageFixedState extends State<LoginPageFixed> {
       _isLoading = true;
     });
 
-    // Mock authentication delay
-    await Future.delayed(const Duration(milliseconds: 900));
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Sign in successful!'),
-            ],
-          ),
-        ),
+    try {
+      // Use actual auth controller for email sign-in
+      final controller = ref.read(authControllerProvider.notifier);
+      await controller.signInWithEmail(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
-      // Navigate to home after a brief delay
-      await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
-        context.go('/home');
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Sign in successful!'),
+              ],
+            ),
+          ),
+        );
+
+        // Wait for success message, then navigate
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          context.go('/today');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Sign in failed: ${e.toString()}'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -86,30 +113,52 @@ class _LoginPageFixedState extends State<LoginPageFixed> {
       _isLoading = true;
     });
 
-    // Mock Google sign-in delay
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      // Use actual auth controller for Google sign-in
+      final controller = ref.read(authControllerProvider.notifier);
+      await controller.signInWithGoogle();
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Google sign in successful!'),
-            ],
-          ),
-        ),
-      );
-
-      await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
-        context.go('/home');
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Google sign in successful!'),
+              ],
+            ),
+          ),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          context.go('/today');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Google sign in failed: ${e.toString()}'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
