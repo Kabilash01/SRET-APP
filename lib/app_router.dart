@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'core/auth/auth_controller.dart';
 import 'features/splash/splash_page.dart';
-import 'features/auth/login_page.dart';
-import 'features/auth/forgot_password_page.dart';
+import 'features/auth/login_page_fixed.dart';
+import 'features/auth/forgot_password_page_sret.dart';
 import 'features/auth/google_signin_page.dart';
-import 'features/auth/signup_page.dart';
+import 'features/auth/signup_page_new.dart';
 import 'features/home/home_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -17,7 +17,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isSignedIn = authState.value != null;
       final isOnSplash = state.matchedLocation == '/splash';
       final isOnAuthRoute = state.matchedLocation == '/login' || 
-                           state.matchedLocation == '/forgot' ||
+                           state.matchedLocation == '/forgot-password' ||
                            state.matchedLocation == '/signin' || 
                            state.matchedLocation == '/signup';
       
@@ -40,11 +40,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginPage(),
+        builder: (context, state) => const LoginPageFixed(),
       ),
       GoRoute(
-        path: '/forgot',
-        builder: (context, state) => const ForgotPasswordPage(),
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordPageSret(),
       ),
       GoRoute(
         path: '/signin',

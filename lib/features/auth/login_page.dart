@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
+import '../shared/liquid_glass.dart';
+import '../shared/validators.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,9 +20,6 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
   bool _isFormValid = false;
-
-  // SRET email validation regex (case-insensitive)
-  static const String _sretEmailRegex = r'^[a-zA-Z0-9._%+-]+@sret\.edu\.in$';
 
   @override
   void initState() {
@@ -38,35 +37,12 @@ class _LoginPageState extends State<LoginPage> {
 
   void _validateForm() {
     final email = _emailController.text.toLowerCase().trim();
-    final isEmailValid = RegExp(_sretEmailRegex, caseSensitive: false).hasMatch(email);
-    final isPasswordValid = _passwordController.text.length >= 6;
+    final isEmailValid = validateSretEmail(email) == null;
+    final isPasswordValid = validatePassword(_passwordController.text) == null;
     
     setState(() {
       _isFormValid = isEmailValid && isPasswordValid;
     });
-  }
-
-  String? _validateSretEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    
-    final email = value.toLowerCase().trim();
-    if (!RegExp(_sretEmailRegex, caseSensitive: false).hasMatch(email)) {
-      return 'Please enter a valid @sret.edu.in email';
-    }
-    
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    return null;
   }
 
   Future<void> _handleSignIn() async {
@@ -144,8 +120,33 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: AppTheme.sretBg,
       body: Stack(
         children: [
-          // Background with blurred blobs
-          Positioned.fill(child: AppTheme.backgroundBlobs),
+          // Background with subtle blobs
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topLeft,
+                  radius: 1.5,
+                  colors: [
+                    Color(0x1A7A0E2A), // Burgundy 10%
+                    Color(0x0A7A0E2A), // Burgundy 4%
+                  ],
+                ),
+              ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.bottomRight,
+                    radius: 1.2,
+                    colors: [
+                      Color(0x1ADFA06E), // Copper 10%
+                      Color(0x0ADFA06E), // Copper 4%
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
           
           // Main content
           Center(
@@ -153,10 +154,11 @@ class _LoginPageState extends State<LoginPage> {
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
-                child: Container(
-                  decoration: AppTheme.liquidGlass,
-                  padding: const EdgeInsets.all(32),
-                  child: Form(
+                child: LiquidGlass(
+                  radius: const BorderRadius.all(Radius.circular(20)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Form(
                     key: _formKey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -189,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           autofillHints: const [AutofillHints.email],
-                          validator: _validateSretEmail,
+                          validator: validateSretEmail,
                           onChanged: (value) {
                             // Convert to lowercase as user types
                             if (value != value.toLowerCase()) {
@@ -214,7 +216,7 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: !_isPasswordVisible,
-                          validator: _validatePassword,
+                          validator: validatePassword,
                           decoration: InputDecoration(
                             labelText: 'Password',
                             hintText: 'Enter your password',
@@ -241,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
-                              context.push('/forgot');
+                              context.push('/forgot-password');
                             },
                             child: Text(
                               'Forgot password?',
@@ -375,6 +377,11 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
-    );
+    ).animate().slideY(
+      begin: 0.15,
+      end: 0,
+      duration: 300.ms,
+      curve: Curves.easeOut,
+    ).fadeIn(duration: 300.ms, curve: Curves.easeOut);
   }
 }
