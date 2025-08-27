@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'liquid_glass.dart';
-import 'liquid_pill_nav.dart';
+import 'bottom_nav_capsule.dart';
 import '../theme/sret_theme.dart';
 
 // Toggle for department tab
@@ -52,26 +52,9 @@ class AppScaffold extends StatelessWidget {
                 child: body,
               ),
       ),
-      bottomNavigationBar: _buildLiquidGlassNavigation(context),
-    );
-  }
-
-  Widget _buildLiquidGlassNavigation(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppTheme.beige.withOpacity(0.0),
-            AppTheme.beige,
-          ],
-        ),
-      ),
-      child: LiquidPillNav(
+      bottomNavigationBar: BottomNavCapsule(
         selectedIndex: currentIndex,
-        onChanged: (index) {
+        onItemSelected: (index) {
           switch (index) {
             case 0:
               context.go('/today');
@@ -93,5 +76,4 @@ class AppScaffold extends StatelessWidget {
       ),
     );
   }
-
 }

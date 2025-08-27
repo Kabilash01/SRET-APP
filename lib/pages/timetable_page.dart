@@ -58,23 +58,37 @@ class TimetablePage extends StatelessWidget {
           const SizedBox(height: 20),
           
           // Period rows
-          const ScheduleTile(
-            time: '9:00 - 9:50 AM',
-            title: 'Data Structures',
-            subtitle: 'CSE-A • Room 204 • Dr. Kumar',
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Text('9:00 - 9:50 AM - Data Structures'),
           ),
           const SizedBox(height: 12),
-          const ScheduleTile(
-            time: '10:00 - 10:50 AM',
-            title: 'Mathematics III',
-            subtitle: 'CSE-A • Room 201 • Prof. Sharma',
-            accentColor: AppTheme.copper,
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Text('10:00 - 10:50 AM - Mathematics III'),
           ),
           const SizedBox(height: 12),
-          const ScheduleTile(
-            time: '11:30 - 12:20 PM',
-            title: 'Database Systems',
-            subtitle: 'CSE-B • Room 301 • Dr. Patel',
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Text('11:30 - 12:20 PM - Database Systems'),
           ),
           const SizedBox(height: 12),
           
@@ -114,17 +128,26 @@ class TimetablePage extends StatelessWidget {
           ),
           
           const SizedBox(height: 12),
-          const ScheduleTile(
-            time: '2:00 - 2:50 PM',
-            title: 'Software Engineering',
-            subtitle: 'CSE-A • Room 105 • Prof. Singh',
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Text('2:00 - 2:50 PM - Software Engineering'),
           ),
           const SizedBox(height: 12),
-          const ScheduleTile(
-            time: '3:00 - 3:50 PM',
-            title: 'Computer Networks',
-            subtitle: 'CSE-B • Lab 2 • Dr. Reddy',
-            accentColor: AppTheme.copper,
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Text('3:00 - 3:50 PM - Computer Networks'),
           ),
           
           const SizedBox(height: 20),

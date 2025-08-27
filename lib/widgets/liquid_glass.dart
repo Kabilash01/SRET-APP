@@ -1,67 +1,46 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 
-class LiquidGlass extends StatefulWidget {
+class LiquidGlass extends StatelessWidget {
   final Widget child;
-  final double radius;
-  final EdgeInsets padding;
+  final BorderRadius? borderRadius;
+  final double? width;
+  final double? height;
 
   const LiquidGlass({
     super.key,
     required this.child,
-    this.radius = 24,
-    this.padding = const EdgeInsets.all(16),
+    this.borderRadius,
+    this.width,
+    this.height,
   });
 
-  // Named constructors
-  const LiquidGlass.card({
-    super.key,
-    required this.child,
-    this.padding = const EdgeInsets.all(16),
-  }) : radius = 20;
-
-  const LiquidGlass.pill({
-    super.key,
-    required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-  }) : radius = 18;
-
-  const LiquidGlass.circle({
-    super.key,
-    required this.child,
-    this.padding = const EdgeInsets.all(16),
-  }) : radius = 28;
-
-  @override
-  State<LiquidGlass> createState() => _LiquidGlassState();
-}
-
-class _LiquidGlassState extends State<LiquidGlass> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(widget.radius),
+      borderRadius: borderRadius ?? BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
         child: Container(
+          width: width,
+          height: height,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.radius),
-            gradient: LinearGradient(
+            borderRadius: borderRadius ?? BorderRadius.circular(24),
+            gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withOpacity(0.18),
-                Colors.white.withOpacity(0.08),
+                Color(0x40FFFFFF), // white 25% (increased from 16%)
+                Color(0x1AFFFFFF), // white 10% (increased from 6%)
               ],
             ),
-            color: Colors.white.withOpacity(0.14),
             border: Border.all(
-              color: Colors.white.withOpacity(0.35),
-              width: 1,
+              color: const Color(0x70FFFFFF), // white 44% (increased from 35%)
+              width: 1.0,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: const Color(0x20000000), // black 12% (increased from 8%)
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -69,37 +48,65 @@ class _LiquidGlassState extends State<LiquidGlass> {
           ),
           child: Stack(
             children: [
-              // Top-left radial highlight
+              // Small top-left radial highlight
               Positioned(
                 top: 0,
                 left: 0,
                 child: Container(
-                  width: widget.radius * 2,
-                  height: widget.radius * 2,
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(widget.radius),
-                    ),
-                    gradient: RadialGradient(
+                    borderRadius: borderRadius ?? BorderRadius.circular(24),
+                    gradient: const RadialGradient(
                       center: Alignment.topLeft,
-                      radius: 1.0,
+                      radius: 0.8,
                       colors: [
-                        Colors.white.withOpacity(0.20),
-                        Colors.white.withOpacity(0.0),
+                        Color(0x30FFFFFF), // white 19% (increased from 12%)
+                        Color(0x00FFFFFF), // white 0%
                       ],
-                      stops: const [0.0, 1.0],
                     ),
                   ),
                 ),
               ),
-              // Content
-              Padding(
-                padding: widget.padding,
-                child: widget.child,
-              ),
+              child,
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // Builder methods
+  static Widget card({required Widget child}) {
+    return LiquidGlass(
+      borderRadius: BorderRadius.circular(24),
+      child: child,
+    );
+  }
+
+  static Widget pill({
+    required Widget child, 
+    double height = 50,
+  }) {
+    return LiquidGlass(
+      height: height,
+      borderRadius: BorderRadius.circular(height / 2),
+      child: child,
+    );
+  }
+
+  static Widget circle({
+    required Widget child, 
+    double size = 46,
+    EdgeInsetsGeometry? padding,
+  }) {
+    return LiquidGlass(
+      width: size,
+      height: size,
+      borderRadius: BorderRadius.circular(size / 2),
+      child: Container(
+        padding: padding ?? EdgeInsets.zero,
+        child: child,
       ),
     );
   }

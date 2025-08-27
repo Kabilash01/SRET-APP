@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Color constants
-  static const Color beige = Color(0xFFFAF6F1);
-  static const Color burgundy = Color(0xFF7A0E2A);
+  // Color constants - Apple liquid glass palette
+  static const Color beige = Color(0xFFF6EFE8);
+  static const Color burgundy = Color(0xFF6B1020);
+  static const Color navyBlue = Color(0xFF1E3A8A); // Navy blue color
+  static const Color darkNavy = Color(0xFF1A2332); // Dark navy from image
+  static const Color cream = Color(0xFFFFFDD0); // Cream color
+  static const Color rose = Color(0xFFEADDD5);
+  static const Color gold = Color(0xFFC7923A);
+  static const Color textPrimary = Color(0xFF2B1E1E);
+  static const Color textSecondary = Color(0xFF6C5959);
+  static const Color lightBeige = Color(0xFFEDE8D0); // Light beige background
+  static const Color backgroundColor = beige;
+  
+  // Legacy colors for compatibility
   static const Color sand = Color(0xFFF7EFE6);
   static const Color copper = Color(0xFFDFA06E);
-  static const Color textPrimary = Color(0xFF1F1B16);
-  static const Color textSecondary = Color(0xFF4B5563);
   static const Color onPrimary = Color(0xFFFFFFFF);
   static const Color outline = Color(0xFFE7DED3);
 
@@ -95,7 +104,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: burgundy,
+          backgroundColor: navyBlue,
           foregroundColor: onPrimary,
           minimumSize: const Size(double.infinity, 48),
           shape: RoundedRectangleBorder(

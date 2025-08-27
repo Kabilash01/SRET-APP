@@ -7,6 +7,7 @@ import 'features/auth/forgot_password_page_sret.dart';
 import 'features/auth/google_signin_page.dart';
 import 'features/shell/app_shell.dart';
 import 'features/today/today_page.dart';
+import 'pages/profile_page.dart';
 import 'features/navigation/placeholder_pages.dart' as nav;
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -107,7 +108,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 name: 'profile',
-                builder: (context, state) => const nav.ProfilePage(),
+                builder: (context, state) => const ProfilePage(),
               ),
             ],
           ),
