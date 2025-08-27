@@ -1,28 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'app_router.dart';
-import 'theme/app_theme.dart';
-import 'theme/app_background.dart';
+import 'theme/sret_theme.dart';
+import 'router/app_router.dart';
 
 void main() {
-  runApp(const ProviderScope(child: SRETApp()));
+  runApp(const SretApp());
 }
 
-class SRETApp extends ConsumerWidget {
-  const SRETApp({super.key});
+class SretApp extends StatelessWidget {
+  const SretApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(appRouterProvider);
-    
+  Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'SRET',
-      theme: AppTheme.lightTheme,
-      routerConfig: router,
       debugShowCheckedModeBanner: false,
-      builder: (context, child) => AppBackground(
-        child: child ?? const SizedBox(),
-      ),
+      title: 'SRET Faculty Portal',
+      theme: AppTheme.light,
+      routerConfig: AppRouter.router,
     );
   }
 }

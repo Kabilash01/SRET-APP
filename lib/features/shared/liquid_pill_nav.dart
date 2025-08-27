@@ -16,7 +16,6 @@ class LiquidPillNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppleLiquidGlass(
       radius: const BorderRadius.all(Radius.circular(32)),
-      blur: 24.0,
       child: Container(
         height: 64,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

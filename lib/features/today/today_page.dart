@@ -49,7 +49,6 @@ class TodayPage extends ConsumerWidget {
                         // Avatar with subtle glass effect
                         AppleLiquidGlass(
                           radius: const BorderRadius.all(Radius.circular(18)),
-                          blur: 16.0,
                           child: Container(
                             width: 36,
                             height: 36,

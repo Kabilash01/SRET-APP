@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'ambient_tokens.dart';
 
 class AppTheme {
-  // SRET Color Tokens
+  // SRET Color Tokens (legacy - keeping for compatibility)
   static const Color sretBg = Color(0xFFFAF6F1);           // SRET/BG
   static const Color sretSurface = Color(0xFFF7EFE6);      // SRET/Surface
   static const Color sretPrimary = Color(0xFF7A0E2A);      // SRET/Primary (Burgundy)
   static const Color sretAccent = Color(0xFFDFA06E);       // SRET/Accent (Copper)
-  static const Color sretText = Color(0xFF1F1B16);         // SRET/Text
+  static const Color sretText = AmbientTokens.kTextDark;   // Updated to use ambient tokens
   static const Color sretTextSecondary = Color(0xFF4B5563); // SRET/TextSecondary
   static const Color sretDivider = Color(0xFFE7DED3);      // SRET/Divider
 
@@ -37,8 +38,8 @@ class AppTheme {
         outline: sretDivider,
       ),
       
-      // Scaffold background
-      scaffoldBackgroundColor: sretBg,
+      // Transparent scaffold background for ambient background
+      scaffoldBackgroundColor: Colors.transparent,
       
       // App Bar theme with frosted glass
       appBarTheme: AppBarTheme(
@@ -208,6 +209,121 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         backgroundColor: glassFrost,
         contentTextStyle: textTheme.bodyMedium?.copyWith(color: sretText),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        behavior: SnackBarBehavior.floating,
+        elevation: 0,
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    final textTheme = GoogleFonts.robotoSerifTextTheme();
+    
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      
+      // Dark color scheme
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: sretPrimary,
+        brightness: Brightness.dark,
+        primary: sretPrimary,
+        onPrimary: Colors.white,
+        secondary: sretAccent,
+        onSecondary: Colors.white,
+        surface: AmbientTokens.kDark1,
+        onSurface: Colors.white,
+        surfaceContainerHighest: AmbientTokens.kDark2,
+        outline: Colors.white24,
+      ),
+      
+      // Transparent scaffold background for ambient background
+      scaffoldBackgroundColor: Colors.transparent,
+      
+      // App Bar theme
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleTextStyle: textTheme.titleLarge?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      
+      // Typography for dark theme
+      textTheme: textTheme.copyWith(
+        displayLarge: textTheme.displayLarge?.copyWith(color: Colors.white),
+        displayMedium: textTheme.displayMedium?.copyWith(color: Colors.white),
+        displaySmall: textTheme.displaySmall?.copyWith(color: Colors.white),
+        headlineLarge: textTheme.headlineLarge?.copyWith(color: Colors.white),
+        headlineMedium: textTheme.headlineMedium?.copyWith(color: Colors.white),
+        headlineSmall: textTheme.headlineSmall?.copyWith(color: Colors.white),
+        titleLarge: textTheme.titleLarge?.copyWith(color: Colors.white),
+        titleMedium: textTheme.titleMedium?.copyWith(color: Colors.white),
+        bodyLarge: textTheme.bodyLarge?.copyWith(color: Colors.white),
+        bodyMedium: textTheme.bodyMedium?.copyWith(color: Colors.white),
+        bodySmall: textTheme.bodySmall?.copyWith(color: Colors.white70),
+        labelLarge: textTheme.labelLarge?.copyWith(color: Colors.white),
+      ),
+      
+      // Button themes for dark mode
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: sretPrimary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        ),
+      ),
+      
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
+          side: const BorderSide(color: Colors.white38),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        ),
+      ),
+      
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: sretPrimary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      
+      // Card theme for dark mode
+      cardTheme: CardThemeData(
+        color: AmbientTokens.kDark1.withOpacity(0.8),
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      
+      // Input decoration for dark mode
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.white24),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.white24),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: sretPrimary),
+        ),
+        labelStyle: const TextStyle(color: Colors.white70),
+        hintStyle: const TextStyle(color: Colors.white38),
+      ),
+      
+      // SnackBar theme for dark mode
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AmbientTokens.kDark1,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         behavior: SnackBarBehavior.floating,
         elevation: 0,

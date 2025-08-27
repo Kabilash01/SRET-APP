@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/auth/fake_auth_repo.dart';
 import '../../theme/app_theme.dart';
-import '../shared/liquid_glass.dart';
+import '../shared/apple_liquid_glass.dart';
 import '../shared/validators.dart';
 
 class ForgotPasswordPageSret extends StatefulWidget {
@@ -130,7 +130,7 @@ class _ForgotPasswordPageSretState extends State<ForgotPasswordPageSret> {
                 padding: const EdgeInsets.all(24),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
-                  child: LiquidGlass(
+                  child: AppleLiquidGlass(
                     radius: const BorderRadius.all(Radius.circular(20)),
                     child: Padding(
                       padding: const EdgeInsets.all(24),

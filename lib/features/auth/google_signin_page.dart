@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_controller.dart';
-import '../shared/blurred_background.dart';
-import '../shared/glass_card.dart';
+import '../shared/apple_liquid_glass.dart';
 import '../shared/bouncy_button.dart';
 
 class GoogleSignInPage extends ConsumerStatefulWidget {
@@ -95,82 +94,85 @@ class _GoogleSignInPageState extends ConsumerState<GoogleSignInPage>
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.isLoading;
 
-    return BlurredBackground(
-      child: Center(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: SlideTransition(
             position: _slideAnimation,
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: GlassCard(
-                width: double.infinity,
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // App Title
-                    Text(
-                      'SRET',
-                      style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF0D2240),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Subtitle
-                    Text(
-                      'Faculty Scheduling & Substitutions',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF4B5563),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // Google Sign-In Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: BouncyButton(
-                        onPressed: isLoading ? null : _handleSignIn,
-                        isLoading: isLoading,
-                        semanticLabel: 'Continue with Google',
-                        leadingIcon: _showCheckmark
-                            ? AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 300),
-                                child: const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 20,
-                                  key: ValueKey('checkmark'),
-                                ),
-                              )
-                            : SvgPicture.asset(
-                                'assets/icons/google_g.svg',
-                                width: 20,
-                                height: 20,
-                              ),
-                        child: const Text('Continue with Google'),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Create account link
-                    TextButton(
-                      onPressed: () => context.go('/signup'),
-                      child: Text(
-                        'Create account',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              child: AppleLiquidGlass(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // App Title
+                      Text(
+                        'SRET',
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                           color: const Color(0xFF0D2240),
-                          decoration: TextDecoration.underline,
                         ),
                       ),
-                    ),
-                  ],
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Subtitle
+                      Text(
+                        'Faculty Scheduling & Substitutions',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: const Color(0xFF4B5563),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      
+                      const SizedBox(height: 40),
+                      
+                      // Google Sign-In Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: BouncyButton(
+                          onPressed: isLoading ? null : _handleSignIn,
+                          isLoading: isLoading,
+                          semanticLabel: 'Continue with Google',
+                          leadingIcon: _showCheckmark
+                              ? AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  child: const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 20,
+                                    key: ValueKey('checkmark'),
+                                  ),
+                                )
+                              : SvgPicture.asset(
+                                  'assets/icons/google_g.svg',
+                                  width: 20,
+                                  height: 20,
+                                ),
+                          child: const Text('Continue with Google'),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Create account link
+                      TextButton(
+                        onPressed: () => context.go('/signup'),
+                        child: Text(
+                          'Create account',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF0D2240),
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

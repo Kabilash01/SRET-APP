@@ -31,11 +31,6 @@ class GlassChip extends StatelessWidget {
 
     return AppleLiquidGlass(
       radius: BorderRadius.circular(radius),
-      blur: blur,
-      // Subtle animation for chips
-      period: const Duration(seconds: 9),
-      sheen: 0.06,
-      grain: 0.03,
       child: Container(
         padding: effectivePadding,
         child: Text(

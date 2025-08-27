@@ -5,7 +5,6 @@ import 'features/splash/splash_page.dart';
 import 'features/auth/login_page_fixed.dart';
 import 'features/auth/forgot_password_page_sret.dart';
 import 'features/auth/google_signin_page.dart';
-import 'features/auth/signup_page_new.dart';
 import 'features/shell/app_shell.dart';
 import 'features/today/today_page.dart';
 import 'features/navigation/placeholder_pages.dart' as nav;
@@ -20,8 +19,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isOnSplash = state.matchedLocation == '/splash';
       final isOnAuthRoute = state.matchedLocation == '/login' || 
                            state.matchedLocation == '/forgot-password' ||
-                           state.matchedLocation == '/signin' || 
-                           state.matchedLocation == '/signup';
+                           state.matchedLocation == '/signin';
       
       // Debug logging
       print('Router redirect - isSignedIn: $isSignedIn, location: ${state.matchedLocation}, isLoading: ${authState.isLoading}');
@@ -55,10 +53,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/signin',
         builder: (context, state) => const GoogleSignInPage(),
-      ),
-      GoRoute(
-        path: '/signup',
-        builder: (context, state) => const SignUpPage(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => AppShell(child: navigationShell),
