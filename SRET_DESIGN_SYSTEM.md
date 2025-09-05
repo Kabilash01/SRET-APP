@@ -1,7 +1,7 @@
 # SRET Design System
 
 ## Overview
-The SRET (Sri Ramakrishna Engineering & Technology) app design system implements a modern, Apple-inspired interface with liquid glass morphism effects and a warm peach-cream color palette. This system emphasizes elegance, accessibility, and user experience while maintaining the institutional identity.
+The SRET (Sri Ramachandra Faculty of  Engineering & Technology) app design system implements a modern, Apple-inspired interface with liquid glass morphism effects and a warm peach-cream color palette. This system emphasizes elegance, accessibility, and user experience while maintaining the institutional identity.
 
 ## Color Palette
 
