@@ -830,32 +830,73 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin, Gl
                   ),
                 ),
               ),
-              // Round Logo Profile Button
+              // Notification/Inbox Button with Burgundy Liquid Glass Effect
               GestureDetector(
-                onTap: _openProfile,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                onTap: _openInbox,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.burgundy.withOpacity(0.9),
+                            AppColors.burgundy.withOpacity(0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.burgundy.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(-1, -1),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Image.asset(
-                        'assets/brand/sret_logo.png',
-                        fit: BoxFit.contain,
+                      child: const Center(
+                        child: Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                     ),
-                  ),
+                    // Notification badge
+                    Positioned(
+                      right: 2,
+                      top: 2,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '3',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -1601,9 +1642,9 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin, Gl
     );
   }
 
-  void _openProfile() {
-    // Navigate to profile page using glass pill navigation
-    handleNavTap(3); // Profile is at index 3
+  void _openInbox() {
+    // Navigate to inbox/notifications page
+    context.go('/inbox');
   }
 
   void _applyLeave(ClassSession classSession) {

@@ -232,7 +232,7 @@ mixin GlassPillNavMixin<T extends StatefulWidget> on State<T> {
     NavItem(icon: Icons.home, label: 'Today', route: '/today'),
     NavItem(icon: Icons.access_time, label: 'Timetable', route: '/timetable'),
     NavItem(icon: Icons.calendar_month, label: 'Calendar', route: '/calendar'),
-    NavItem(icon: Icons.inbox, label: 'Inbox', route: '/inbox'),
+    NavItem(icon: Icons.dashboard, label: 'Dept', route: '/dept'),
     NavItem(icon: Icons.person, label: 'Profile', route: '/profile'),
   ];
 

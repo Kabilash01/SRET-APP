@@ -4,6 +4,7 @@ import '../pages/auth/sign_in_page.dart';
 import '../pages/auth/reset_password_page.dart';
 import '../pages/today_page.dart';
 import '../pages/profile_page.dart';
+import '../features/hod/pages/hod_dashboard_page.dart';
 import '../widgets/glass_pill_nav.dart';
 import '../theme/app_theme.dart';
 
@@ -30,6 +31,10 @@ class AppRouter {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: '/dept',
+        builder: (context, state) => const HodDashboardPage(),
       ),
       // Placeholder routes for remaining navigation items
       GoRoute(

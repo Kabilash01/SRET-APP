@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   // Primary palette
   static const Color scaffoldBackground = Color(0xFFF6EFE8); // Beige
+  static const Color background = Color(0xFFF6EFE8); // Alias for scaffoldBackground
   static const Color primary = Color(0xFF6B1020); // Burgundy
   static const Color onPrimary = Colors.white;
   
