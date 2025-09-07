@@ -25,11 +25,10 @@ class AppColors {
 
 class AppTheme {
   static ThemeData get light {
-    final textTheme = GoogleFonts.robotoSerifTextTheme();
-    
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.scaffoldBackground,
+      fontFamily: GoogleFonts.robotoSerif().fontFamily, // Set default font family
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.light,
@@ -37,42 +36,67 @@ class AppTheme {
         onPrimary: AppColors.onPrimary,
         surface: AppColors.surface,
       ),
-      textTheme: textTheme.copyWith(
-        headlineLarge: textTheme.headlineLarge?.copyWith(
+      textTheme: TextTheme(
+        headlineLarge: GoogleFonts.robotoSerif(
           color: AppColors.primary,
           fontSize: 36,
           fontWeight: FontWeight.w900,
           letterSpacing: -0.8,
         ),
-        headlineMedium: textTheme.headlineMedium?.copyWith(
+        headlineMedium: GoogleFonts.robotoSerif(
           color: AppColors.primary,
           fontSize: 26,
           fontWeight: FontWeight.w800,
         ),
-        titleLarge: textTheme.titleLarge?.copyWith(
+        headlineSmall: GoogleFonts.robotoSerif(
           color: AppColors.primary,
           fontSize: 22,
           fontWeight: FontWeight.w700,
         ),
-        titleMedium: textTheme.titleMedium?.copyWith(
+        titleLarge: GoogleFonts.robotoSerif(
+          color: AppColors.primary,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: GoogleFonts.robotoSerif(
           color: AppColors.primary,
           fontSize: 17,
           fontWeight: FontWeight.w600,
         ),
-        bodyLarge: textTheme.bodyLarge?.copyWith(
+        titleSmall: GoogleFonts.robotoSerif(
+          color: AppColors.primary,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+        bodyLarge: GoogleFonts.robotoSerif(
           color: AppColors.textPrimary,
           fontSize: 17,
           fontWeight: FontWeight.w500,
         ),
-        bodyMedium: textTheme.bodyMedium?.copyWith(
+        bodyMedium: GoogleFonts.robotoSerif(
           color: AppColors.textPrimary,
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),
-        bodySmall: textTheme.bodySmall?.copyWith(
+        bodySmall: GoogleFonts.robotoSerif(
           color: AppColors.textSecondary,
           fontSize: 13,
           fontWeight: FontWeight.w400,
+        ),
+        labelLarge: GoogleFonts.robotoSerif(
+          color: AppColors.textPrimary,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+        labelMedium: GoogleFonts.robotoSerif(
+          color: AppColors.textPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        labelSmall: GoogleFonts.robotoSerif(
+          color: AppColors.textSecondary,
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -83,9 +107,10 @@ class AppTheme {
         errorBorder: InputBorder.none,
         focusedErrorBorder: InputBorder.none,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        hintStyle: textTheme.bodyMedium?.copyWith(
+        hintStyle: GoogleFonts.robotoSerif(
           color: AppColors.textSecondary.withValues(alpha: 0.7),
           fontSize: 14,
+          fontWeight: FontWeight.w400,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -97,7 +122,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(26),
           ),
           elevation: 0,
-          textStyle: textTheme.labelLarge?.copyWith(
+          textStyle: GoogleFonts.robotoSerif(
             fontSize: 17,
             fontWeight: FontWeight.w700,
           ),
@@ -106,10 +131,20 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: textTheme.labelMedium?.copyWith(
+          textStyle: GoogleFonts.robotoSerif(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
+        ),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.scaffoldBackground,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 0,
+        titleTextStyle: GoogleFonts.robotoSerif(
+          color: AppColors.textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

@@ -813,7 +813,6 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Roboto Serif',
                   ),
                 ),
               ),
@@ -821,19 +820,19 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
                 borderRadius: 12,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: InkWell(
-                  onTap: _openTimetable,
+                  onTap: _openProfile,
                   borderRadius: BorderRadius.circular(12),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.calendar_view_week,
+                        Icons.person_outline,
                         size: 18,
                         color: AppColors.primary,
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'View Week',
+                        'Profile',
                         style: TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w600,
@@ -846,18 +845,6 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
               ),
             ],
           ),
-          
-          // Timezone hint
-          if (!_isTimezoneMatch) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Times shown in ${_userPreferences.timezone}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -884,7 +871,6 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
-              fontFamily: 'Roboto Serif',
             ),
           ),
           
@@ -1523,33 +1509,28 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
 
   Widget _buildBottomNavigation() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: LiquidGlass(
-        borderRadius: 30,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Container(
-          height: 60,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+      margin: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(Icons.today, 'Today', true),
-              _buildNavItem(Icons.calendar_view_week, 'Week', false),
-              _buildNavItem(Icons.schedule, 'Schedule', false),
-              _buildNavItem(Icons.inbox, 'Inbox', false),
-              _buildNavItem(Icons.person, 'Profile', false),
-            ],
-          ),
-        ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildNavItem(Icons.home, 'Today', true),
+          _buildNavItem(Icons.access_time, 'Timetable', false),
+          _buildNavItem(Icons.calendar_month, 'Calendar', false),
+          _buildNavItem(Icons.inbox, 'Inbox', false),
+          _buildNavItem(Icons.apartment, 'Dept', false),
+        ],
       ),
     );
   }
@@ -1562,13 +1543,6 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
         decoration: isActive ? BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ) : null,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1576,16 +1550,19 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
             Icon(
               icon,
               size: 20,
-              color: isActive ? Colors.white : AppColors.textSecondary,
+              color: isActive ? Colors.white : AppColors.primary,
             ),
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : AppColors.textSecondary,
+                color: isActive ? Colors.white : AppColors.primary,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -1660,6 +1637,23 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Timetable feature coming soon...'),
+        backgroundColor: AppColors.primary,
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openProfile() {
+    // Navigate to profile page
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Profile page - Coming soon'),
         backgroundColor: AppColors.primary,
         action: SnackBarAction(
           label: 'OK',
@@ -1818,7 +1812,10 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
                     Expanded(
                       child: Text(
                         'Do Not Disturb is enabled. Reminder may not notify.',
-                        style: TextStyle(color: Colors.orange, fontSize: 12),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.orange, 
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -1854,7 +1851,10 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 12)),
+      child: Text(
+        label, 
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
+      ),
     );
   }
 
@@ -1864,17 +1864,17 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
     // Provide better feedback for navigation
     String message = '';
     switch (section) {
-      case 'Week':
-        message = 'Weekly timetable view';
+      case 'Timetable':
+        message = 'Timetable view';
         break;
-      case 'Schedule':
-        message = 'Full schedule management';
+      case 'Calendar':
+        message = 'Calendar and events';
         break;
       case 'Inbox':
         message = 'Notifications and messages';
         break;
-      case 'Profile':
-        message = 'Profile and settings';
+      case 'Dept':
+        message = 'Department information';
         break;
       default:
         message = section;
