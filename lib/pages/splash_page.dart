@@ -97,6 +97,7 @@ class _SplashPageState extends State<SplashPage>
                         width: 150,
                         height: 150,
                         child: LiquidGlass.circle(
+                          size: 150,
                           child: Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,

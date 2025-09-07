@@ -1,46 +1,97 @@
-import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class LiquidGlass extends StatelessWidget {
   final Widget child;
-  final BorderRadius? borderRadius;
+  final EdgeInsetsGeometry? padding;
+  final double borderRadius;
   final double? width;
   final double? height;
 
   const LiquidGlass({
     super.key,
     required this.child,
-    this.borderRadius,
+    this.padding,
+    this.borderRadius = 24,
     this.width,
     this.height,
   });
 
+  /// Creates a glass card with default padding
+  static Widget card({
+    required Widget child,
+    EdgeInsetsGeometry? padding,
+    double borderRadius = 24,
+    double? width,
+    double? height,
+  }) {
+    return LiquidGlass(
+      padding: padding ?? const EdgeInsets.all(24),
+      borderRadius: borderRadius,
+      width: width,
+      height: height,
+      child: child,
+    );
+  }
+
+  /// Creates a glass pill with fixed height
+  static Widget pill({
+    required Widget child,
+    EdgeInsetsGeometry? padding,
+    double height = 52,
+    double? width,
+  }) {
+    return LiquidGlass(
+      padding: padding ?? const EdgeInsets.symmetric(horizontal: 20),
+      borderRadius: height / 2,
+      width: width,
+      height: height,
+      child: child,
+    );
+  }
+
+  /// Creates a circular glass widget
+  static Widget circle({
+    required Widget child,
+    required double size,
+    EdgeInsetsGeometry? padding,
+  }) {
+    return LiquidGlass(
+      padding: padding,
+      borderRadius: size / 2,
+      width: size,
+      height: size,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
         child: Container(
           width: width,
           height: height,
           decoration: BoxDecoration(
-            borderRadius: borderRadius ?? BorderRadius.circular(24),
-            gradient: const LinearGradient(
+            borderRadius: BorderRadius.circular(borderRadius),
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0x40FFFFFF), // white 25% (increased from 16%)
-                Color(0x1AFFFFFF), // white 10% (increased from 6%)
+                AppColors.glassFill1, // white@16%
+                AppColors.glassFill2, // white@6%
               ],
             ),
             border: Border.all(
-              color: const Color(0x70FFFFFF), // white 44% (increased from 35%)
-              width: 1.0,
+              color: AppColors.glassStroke, // white@35%
+              width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0x20000000), // black 12% (increased from 8%)
+                color: AppColors.glassShadow, // black@8%
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -48,65 +99,38 @@ class LiquidGlass extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              // Small top-left radial highlight
+              // Top-left radial highlight
               Positioned(
                 top: 0,
                 left: 0,
                 child: Container(
-                  width: 60,
-                  height: 60,
+                  width: borderRadius * 2,
+                  height: borderRadius * 2,
                   decoration: BoxDecoration(
-                    borderRadius: borderRadius ?? BorderRadius.circular(24),
-                    gradient: const RadialGradient(
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    gradient: RadialGradient(
                       center: Alignment.topLeft,
-                      radius: 0.8,
+                      radius: 1.0,
                       colors: [
-                        Color(0x30FFFFFF), // white 19% (increased from 12%)
-                        Color(0x00FFFFFF), // white 0%
+                        AppColors.glassHighlight, // white@10-12%
+                        Colors.transparent,
                       ],
+                      stops: const [0.0, 1.0],
                     ),
                   ),
                 ),
               ),
-              child,
+              // Child content
+              if (padding != null)
+                Padding(
+                  padding: padding!,
+                  child: child,
+                )
+              else
+                child,
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // Builder methods
-  static Widget card({required Widget child}) {
-    return LiquidGlass(
-      borderRadius: BorderRadius.circular(24),
-      child: child,
-    );
-  }
-
-  static Widget pill({
-    required Widget child, 
-    double height = 50,
-  }) {
-    return LiquidGlass(
-      height: height,
-      borderRadius: BorderRadius.circular(height / 2),
-      child: child,
-    );
-  }
-
-  static Widget circle({
-    required Widget child, 
-    double size = 46,
-    EdgeInsetsGeometry? padding,
-  }) {
-    return LiquidGlass(
-      width: size,
-      height: size,
-      borderRadius: BorderRadius.circular(size / 2),
-      child: Container(
-        padding: padding ?? EdgeInsets.zero,
-        child: child,
       ),
     );
   }

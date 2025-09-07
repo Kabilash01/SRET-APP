@@ -97,6 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return LiquidGlass.circle(
+                              size: 64,
                               padding: const EdgeInsets.all(20),
                               child: Icon(
                                 Icons.person,
@@ -108,6 +109,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       )
                     : LiquidGlass.circle(
+                        size: 64,
                         padding: const EdgeInsets.all(20),
                         child: Icon(
                           Icons.person,
