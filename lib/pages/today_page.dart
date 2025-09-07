@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../widgets/liquid_glass.dart';
+import '../widgets/glass_pill_nav.dart';
 
 // App lifecycle observer helper
 class _AppLifecycleObserver extends WidgetsBindingObserver {
@@ -151,7 +152,7 @@ class TodayPage extends StatefulWidget {
   State<TodayPage> createState() => _TodayPageState();
 }
 
-class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
+class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin, GlassPillNavMixin {
   Timer? _updateTimer;
   List<ClassSession> _todaysClasses = [];
   List<ClassSession> _upcomingClasses = [];
@@ -169,6 +170,10 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
   late Animation<double> _actionCardAnimation;
   late AnimationController _heroProgressController;
   late Animation<double> _heroProgressAnimation;
+  
+  // Glass pill navigation
+  @override
+  int get selectedNavIndex => 0; // Today page is index 0
   
   // Cache duration for smooth UX
   static const Duration _cacheTimeout = Duration(minutes: 3);
@@ -556,8 +561,10 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
+      extendBody: true, // Allow body to extend behind navigation
       body: Stack(
         children: [
+          // Main content with padding to avoid pill overlap
           SafeArea(
             child: Column(
               children: [
@@ -567,19 +574,19 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
                 // Smart Banners
                 if (_smartBanners.isNotEmpty) _buildSmartBanners(),
               
-                // Main Content
+                // Main Content with bottom padding for glass pill
                 Expanded(
-                  child: _isLoading 
-                    ? _buildLoadingState()
-                    : _error != null
-                      ? _buildErrorState()
-                      : _todaysClasses.isEmpty
-                        ? _buildEmptyState()
-                        : _buildMainContent(),
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: glassPillBottomPadding),
+                    child: _isLoading 
+                      ? _buildLoadingState()
+                      : _error != null
+                        ? _buildErrorState()
+                        : _todaysClasses.isEmpty
+                          ? _buildEmptyState()
+                          : _buildMainContent(),
+                  ),
                 ),
-                
-                // Bottom Navigation
-                _buildBottomNavigation(),
               ],
             ),
           ),
@@ -589,7 +596,7 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
             Positioned(
               left: 16,
               right: 16,
-              bottom: 96,
+              bottom: glassPillBottomPadding + 8, // Position above glass pill
               child: AnimatedBuilder(
                 animation: _actionCardAnimation,
                 builder: (context, child) {
@@ -603,6 +610,13 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
                 },
               ),
             ),
+          
+          // Glass Pill Navigation Overlay
+          GlassPillNav(
+            selectedIndex: selectedNavIndex,
+            onItemTapped: handleNavTap,
+            items: GlassPillNavMixin.navItems,
+          ),
         ],
       ),
     );
@@ -816,30 +830,31 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              LiquidGlass(
-                borderRadius: 12,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: InkWell(
-                  onTap: _openProfile,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.person_outline,
-                        size: 18,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Profile',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+              // Round Logo Profile Button
+              GestureDetector(
+                onTap: _openProfile,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
+                  ),
+                  child: ClipOval(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Image.asset(
+                        'assets/brand/sret_logo.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1507,69 +1522,6 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildBottomNavigation() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(Icons.home, 'Today', true),
-          _buildNavItem(Icons.access_time, 'Timetable', false),
-          _buildNavItem(Icons.calendar_month, 'Calendar', false),
-          _buildNavItem(Icons.inbox, 'Inbox', false),
-          _buildNavItem(Icons.apartment, 'Dept', false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return GestureDetector(
-      onTap: () => _handleNavTap(label),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: isActive ? BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(20),
-        ) : null,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isActive ? Colors.white : AppColors.primary,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : AppColors.primary,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildLoadingState() {
     return const Center(
       child: CircularProgressIndicator(),
@@ -1650,20 +1602,8 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
   }
 
   void _openProfile() {
-    // Navigate to profile page
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Profile page - Coming soon'),
-        backgroundColor: AppColors.primary,
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
+    // Navigate to profile page using glass pill navigation
+    handleNavTap(3); // Profile is at index 3
   }
 
   void _applyLeave(ClassSession classSession) {
@@ -1854,43 +1794,6 @@ class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
       child: Text(
         label, 
         style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-      ),
-    );
-  }
-
-  void _handleNavTap(String section) {
-    if (section == 'Today') return;
-    
-    // Provide better feedback for navigation
-    String message = '';
-    switch (section) {
-      case 'Timetable':
-        message = 'Timetable view';
-        break;
-      case 'Calendar':
-        message = 'Calendar and events';
-        break;
-      case 'Inbox':
-        message = 'Notifications and messages';
-        break;
-      case 'Dept':
-        message = 'Department information';
-        break;
-      default:
-        message = section;
-    }
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$message - Coming soon'),
-        backgroundColor: AppColors.primary,
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
       ),
     );
   }

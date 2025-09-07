@@ -14,6 +14,10 @@ class AppColors {
   // Surface and accents
   static const Color surface = Color(0xFFEADDD5); // Rose
   static const Color accent = Color(0xFFC7923A); // Gold
+  static const Color outline = Color(0xFFD2C2B5); // Muted outline color
+  
+  // Legacy color names for backward compatibility
+  static const Color burgundy = primary; // Alias for primary
   
   // Glass effect colors
   static const Color glassStroke = Color(0x59FFFFFF); // white@35%
