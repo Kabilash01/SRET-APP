@@ -151,10 +151,13 @@ class TodayPage extends StatefulWidget {
   State<TodayPage> createState() => _TodayPageState();
 }
 
-class _TodayPageState extends State<TodayPage> {
+class _TodayPageState extends State<TodayPage> with TickerProviderStateMixin {
   Timer? _updateTimer;
   List<ClassSession> _todaysClasses = [];
+  List<ClassSession> _upcomingClasses = [];
+  List<ClassSession> _completedClasses = [];
   ClassSession? _heroClass;
+  ClassSession? _currentClass;
   bool _isLoading = true;
   String? _error;
   bool _isOffline = false;
@@ -162,6 +165,10 @@ class _TodayPageState extends State<TodayPage> {
   List<SmartBanner> _smartBanners = [];
   DateTime _lastFetchTime = DateTime.now();
   final UserPreferences _userPreferences = UserPreferences();
+  late AnimationController _actionCardController;
+  late Animation<double> _actionCardAnimation;
+  late AnimationController _heroProgressController;
+  late Animation<double> _heroProgressAnimation;
   
   // Cache duration for smooth UX
   static const Duration _cacheTimeout = Duration(minutes: 3);
@@ -172,6 +179,26 @@ class _TodayPageState extends State<TodayPage> {
   @override
   void initState() {
     super.initState();
+    
+    // Initialize animation controllers
+    _actionCardController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _actionCardAnimation = CurvedAnimation(
+      parent: _actionCardController,
+      curve: Curves.easeInOut,
+    );
+    
+    _heroProgressController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _heroProgressAnimation = CurvedAnimation(
+      parent: _heroProgressController,
+      curve: Curves.easeInOut,
+    );
+    
     _loadTodayData();
     _startUpdateTimer();
     
@@ -182,6 +209,8 @@ class _TodayPageState extends State<TodayPage> {
   @override
   void dispose() {
     _updateTimer?.cancel();
+    _actionCardController.dispose();
+    _heroProgressController.dispose();
     WidgetsBinding.instance.removeObserver(_AppLifecycleObserver(_onAppResumed));
     super.dispose();
   }
@@ -214,7 +243,7 @@ class _TodayPageState extends State<TodayPage> {
           setState(() {
             _isLoading = false;
             _isOffline = false;
-            _updateSmartBanners(); // Initialize smart banners
+            _updateSmartBanners();
           });
         } catch (e) {
           setState(() {
@@ -310,8 +339,40 @@ class _TodayPageState extends State<TodayPage> {
     }).toList();
 
     _todaysClasses.sort((a, b) => _compareTimeOfDay(a.entry.startTime, b.entry.startTime));
-    _heroClass = _findHeroClass();
+    _organizeClasses();
     _smartBanners = _generateSmartBanners();
+  }
+  
+  void _organizeClasses() {
+    _currentClass = _todaysClasses.where((c) => c.status == ClassStatus.now).firstOrNull;
+    
+    // Upcoming classes (ascending by start time)
+    _upcomingClasses = _todaysClasses.where((c) => c.status == ClassStatus.upcoming).toList()
+      ..sort((a, b) => _compareTimeOfDay(a.entry.startTime, b.entry.startTime));
+    
+    // Completed classes (descending by end time)
+    _completedClasses = _todaysClasses.where((c) => c.status == ClassStatus.completed).toList()
+      ..sort((a, b) => _compareTimeOfDay(b.entry.endTime, a.entry.endTime));
+    
+    // Hero class: Current class if exists, else next upcoming class, else last completed
+    if (_currentClass != null) {
+      _heroClass = _currentClass;
+    } else if (_upcomingClasses.isNotEmpty) {
+      _heroClass = _upcomingClasses.first;
+    } else if (_completedClasses.isNotEmpty) {
+      _heroClass = _completedClasses.first;
+    } else {
+      _heroClass = null;
+    }
+    
+    // Update action card visibility
+    if (_currentClass != null) {
+      _actionCardController.forward();
+      _heroProgressController.forward();
+    } else {
+      _actionCardController.reverse();
+      _heroProgressController.reverse();
+    }
   }
 
   ClassStatus _getClassStatus(TimetableEntry entry, TimeOfDay now) {
@@ -372,66 +433,9 @@ class _TodayPageState extends State<TodayPage> {
     }
   }
 
-  ClassSession? _findHeroClass() {
-    final currentClass = _todaysClasses.where((c) => c.status == ClassStatus.now).firstOrNull;
-    if (currentClass != null) return currentClass;
-
-    final upcomingClasses = _todaysClasses.where((c) => c.status == ClassStatus.upcoming).toList();
-    if (upcomingClasses.isNotEmpty) return upcomingClasses.first;
-
-    final completedClasses = _todaysClasses.where((c) => c.status == ClassStatus.completed).toList();
-    if (completedClasses.isNotEmpty) return completedClasses.last;
-
-    return null;
-  }
-
   List<SmartBanner> _generateSmartBanners() {
-    List<SmartBanner> banners = [];
-    
-    // Only show if user has opted in and not in DND (unless urgent)
-    if (_userPreferences.substitutionOptIn && !_userPreferences.isDndEnabled) {
-      banners.add(SmartBanner(
-        id: '1',
-        type: SmartBannerType.substitution,
-        title: 'Substitution offer today at 2:00 PM',
-        action: 'View',
-        icon: Icons.swap_horiz,
-        onTap: () => _handleBannerTap(SmartBannerType.substitution),
-      ));
-    }
-    
-    // Leave request banner (can bypass DND if urgent)
-    banners.add(SmartBanner(
-      id: '2',
-      type: SmartBannerType.leaveRequest,
-      title: 'Leave request pending for 11:00–11:50',
-      action: 'View',
-      icon: Icons.event_busy,
-      urgency: BannerUrgency.high,
-      onTap: () => _handleBannerTap(SmartBannerType.leaveRequest),
-    ));
-    
-    if (!_userPreferences.isDndEnabled) {
-      banners.add(SmartBanner(
-        id: '3',
-        type: SmartBannerType.classSwap,
-        title: 'Swap with Dr. Rao awaiting response',
-        action: 'View',
-        icon: Icons.sync_alt,
-        onTap: () => _handleBannerTap(SmartBannerType.classSwap),
-      ));
-    }
-    
-    return banners;
-  }
-
-  void _handleBannerTap(SmartBannerType type) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening ${type.name} details...'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+    // Return empty list - no demo banners needed
+    return [];
   }
 
   void _updateClassStatuses() {
@@ -440,11 +444,12 @@ class _TodayPageState extends State<TodayPage> {
     
     for (int i = 0; i < _todaysClasses.length; i++) {
       final entry = _todaysClasses[i].entry;
+      final oldStatus = _todaysClasses[i].status;
       final newStatus = _getClassStatus(entry, now);
       final newTimeRemaining = _getTimeRemaining(entry, now);
       final newStatusText = _getStatusText(entry, now, newTimeRemaining);
       
-      if (_todaysClasses[i].status != newStatus ||
+      if (oldStatus != newStatus ||
           _todaysClasses[i].timeRemaining != newTimeRemaining) {
         _todaysClasses[i] = ClassSession(
           entry: entry,
@@ -453,13 +458,24 @@ class _TodayPageState extends State<TodayPage> {
           statusText: newStatusText,
         );
         hasChanges = true;
+        
+        // Handle status transitions for smooth animations
+        if (oldStatus == ClassStatus.upcoming && newStatus == ClassStatus.now) {
+          // Class just started - show action card
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) _actionCardController.forward();
+          });
+        } else if (oldStatus == ClassStatus.now && newStatus == ClassStatus.completed) {
+          // Class just ended - hide action card
+          _actionCardController.reverse();
+        }
       }
     }
     
     if (hasChanges && mounted) {
       setState(() {
-        _heroClass = _findHeroClass();
-        _updateSmartBanners(); // Update banners with new class statuses
+        _organizeClasses();
+        _updateSmartBanners();
       });
     }
   }
@@ -485,19 +501,20 @@ class _TodayPageState extends State<TodayPage> {
     return DateFormat('EEE, d MMM yyyy').format(now);
   }
 
-  String _getFormattedTimeRemaining(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes % 60;
-    
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    } else {
-      return '${minutes}m';
+  Color _getCourseTypeColor(String courseType) {
+    switch (courseType.toLowerCase()) {
+      case 'theory':
+        return Colors.blue;
+      case 'lab':
+        return Colors.purple;
+      case 'project':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   bool _canApplyLeave(ClassSession classSession) {
-    // Cannot apply leave for past classes or classes starting in less than 15 minutes
     final now = TimeOfDay.now();
     final currentMinutes = now.hour * 60 + now.minute;
     final startMinutes = classSession.entry.startTime.hour * 60 + classSession.entry.startTime.minute;
@@ -506,170 +523,27 @@ class _TodayPageState extends State<TodayPage> {
   }
 
   bool _canSwapClass(ClassSession classSession) {
-    // Similar to leave application rules
     return _canApplyLeave(classSession);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
-      body: Semantics(
-        label: 'Today\'s Class Schedule',
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Offline banner
-              if (_isOffline)
-                Semantics(
-                  liveRegion: true,
-                  label: 'You are offline, showing cached schedule',
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: AppColors.accent.withOpacity(0.1),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.cloud_off,
-                          size: 16,
-                          color: AppColors.accent,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'You\'re offline — showing cached schedule',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.accent,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              
-              // Smart Banners
-              if (_smartBanners.isNotEmpty)
-                Semantics(
-                  label: 'Smart notifications',
-                  child: Column(
-                    children: _smartBanners.map((banner) => _buildSmartBanner(banner)).toList(),
-                  ),
-                ),
-            
-              // Main Content
-              Expanded(
-                child: Semantics(
-                  label: 'Class schedule content',
-                  child: _isLoading 
-                    ? _buildLoadingState()
-                    : _error != null
-                      ? _buildErrorState()
-                      : _todaysClasses.isEmpty
-                        ? _buildEmptyState()
-                        : _buildMainContent(),
-                ),
-              ),
-              
-              // Bottom Navigation
-              Semantics(
-                label: 'Navigation menu',
-                child: _buildBottomNavigation(Theme.of(context)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  double _calculateProgress(ClassSession classSession) {
+    if (classSession.status != ClassStatus.now) return 0.0;
+    
+    final now = DateTime.now();
+    final start = classSession.entry.startTime;
+    final end = classSession.entry.endTime;
+    
+    final startToday = DateTime(now.year, now.month, now.day, start.hour, start.minute);
+    final endToday = DateTime(now.year, now.month, now.day, end.hour, end.minute);
+    
+    final totalDuration = endToday.difference(startToday).inMinutes;
+    final elapsed = now.difference(startToday).inMinutes;
+    
+    return elapsed / totalDuration;
   }
 
-  Widget _buildSmartBanner(SmartBanner banner) {
-    Color borderColor;
-    Color iconColor;
-    
-    switch (banner.urgency) {
-      case BannerUrgency.critical:
-        borderColor = Colors.red;
-        iconColor = Colors.red;
-        break;
-      case BannerUrgency.high:
-        borderColor = Colors.orange;
-        iconColor = Colors.orange;
-        break;
-      case BannerUrgency.medium:
-        borderColor = AppColors.primary;
-        iconColor = AppColors.primary;
-        break;
-      case BannerUrgency.low:
-        borderColor = AppColors.textSecondary;
-        iconColor = AppColors.textSecondary;
-        break;
-    }
-    
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: LiquidGlass(
-        borderRadius: 12,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: borderColor.withOpacity(0.3),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Icon(
-                  banner.icon,
-                  size: 20,
-                  color: iconColor,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    banner.title,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: banner.urgency == BannerUrgency.critical 
-                        ? FontWeight.w700 
-                        : FontWeight.w500,
-                    ),
-                  ),
-                ),
-                if (banner.action.isNotEmpty) ...[
-                  TextButton(
-                    onPressed: banner.onTap,
-                    child: Text(
-                      banner.action,
-                      style: TextStyle(
-                        color: iconColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-                IconButton(
-                  onPressed: () => _dismissBanner(banner.id),
-                  icon: Icon(
-                    Icons.close,
-                    size: 18,
-                    color: AppColors.textSecondary,
-                  ),
-                  tooltip: 'Dismiss',
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  void _updateSmartBanners() {
+    // Keep existing banners for demo
   }
 
   void _dismissBanner(String bannerId) {
@@ -678,456 +552,158 @@ class _TodayPageState extends State<TodayPage> {
     });
   }
 
-  void _updateSmartBanners() {
-    _smartBanners.clear();
-    
-    // Don't show banners if DND is enabled and user opted out
-    if (_userPreferences.isDndEnabled && !_userPreferences.substitutionOptIn) {
-      return;
-    }
-    
-    final now = DateTime.now();
-    final upcomingClasses = _todaysClasses.where((c) => 
-      c.status == ClassStatus.upcoming && 
-      c.timeRemaining != null && 
-      c.timeRemaining!.inMinutes <= 120 // Next 2 hours
-    ).toList();
-    
-    // Critical: Class starting very soon (less than 10 minutes)
-    final urgentClasses = upcomingClasses.where((c) => 
-      c.timeRemaining!.inMinutes <= 10
-    ).toList();
-    
-    if (urgentClasses.isNotEmpty) {
-      final urgentClass = urgentClasses.first;
-      _smartBanners.add(SmartBanner(
-        id: 'urgent_class_${urgentClass.entry.course.code}',
-        type: SmartBannerType.urgent,
-        title: '🚨 ${urgentClass.entry.course.code} starts in ${urgentClass.timeRemaining!.inMinutes} min!',
-        action: 'Get Ready',
-        icon: Icons.warning_amber,
-        urgency: BannerUrgency.critical,
-        onTap: () => _prepareForClass(urgentClass),
-      ));
-    }
-    
-    // High: Location change needed
-    final locationChangeClasses = upcomingClasses.where((c) => 
-      c.timeRemaining!.inMinutes <= 30 && 
-      _needsLocationChange(c)
-    ).toList();
-    
-    if (locationChangeClasses.isNotEmpty && urgentClasses.isEmpty) {
-      final locationClass = locationChangeClasses.first;
-      _smartBanners.add(SmartBanner(
-        id: 'location_change_${locationClass.entry.course.code}',
-        type: SmartBannerType.location,
-        title: 'Time to head to ${locationClass.entry.building} for ${locationClass.entry.course.code}',
-        action: 'Directions',
-        icon: Icons.directions_walk,
-        urgency: BannerUrgency.high,
-        onTap: () => _getDirections(locationClass),
-      ));
-    }
-    
-    // Medium: Preparation reminders
-    final preparationClasses = upcomingClasses.where((c) => 
-      c.timeRemaining!.inMinutes <= 60 && 
-      c.timeRemaining!.inMinutes > 30 &&
-      c.entry.course.courseType == 'Lab'
-    ).toList();
-    
-    if (preparationClasses.isNotEmpty && 
-        urgentClasses.isEmpty && 
-        locationChangeClasses.isEmpty) {
-      final prepClass = preparationClasses.first;
-      _smartBanners.add(SmartBanner(
-        id: 'prep_${prepClass.entry.course.code}',
-        type: SmartBannerType.preparation,
-        title: 'Lab session coming up: ${prepClass.entry.course.code}',
-        action: 'Prepare',
-        icon: Icons.science,
-        urgency: BannerUrgency.medium,
-        onTap: () => _prepareForLab(prepClass),
-      ));
-    }
-    
-    // Low: General reminders
-    final reminderClasses = upcomingClasses.where((c) => 
-      c.timeRemaining!.inMinutes <= 90 && 
-      c.timeRemaining!.inMinutes > 60
-    ).toList();
-    
-    if (reminderClasses.isNotEmpty && 
-        _smartBanners.length < 2) { // Limit total banners
-      final reminderClass = reminderClasses.first;
-      _smartBanners.add(SmartBanner(
-        id: 'reminder_${reminderClass.entry.course.code}',
-        type: SmartBannerType.reminder,
-        title: 'Next class: ${reminderClass.entry.course.code} in ${(reminderClass.timeRemaining!.inMinutes / 60).round()}h',
-        action: 'View',
-        icon: Icons.schedule,
-        urgency: BannerUrgency.low,
-        onTap: () => _openClassDetails(reminderClass),
-      ));
-    }
-    
-    // Special banners for specific conditions
-    _addSpecialBanners(now);
-    
-    // Sort banners by urgency
-    _smartBanners.sort((a, b) => b.urgency.index.compareTo(a.urgency.index));
-    
-    // Limit to maximum 3 banners to avoid overwhelming UI
-    if (_smartBanners.length > 3) {
-      _smartBanners = _smartBanners.take(3).toList();
-    }
-  }
-
-  void _addSpecialBanners(DateTime now) {
-    // Free period banner
-    final currentTime = TimeOfDay.now();
-    final hasCurrentClass = _todaysClasses.any((c) => c.status == ClassStatus.now);
-    final nextClass = _todaysClasses.where((c) => c.status == ClassStatus.upcoming).firstOrNull;
-    
-    if (!hasCurrentClass && nextClass != null && nextClass.timeRemaining != null) {
-      final freeTimeMinutes = nextClass.timeRemaining!.inMinutes;
-      if (freeTimeMinutes >= 30 && freeTimeMinutes <= 120) {
-        _smartBanners.add(SmartBanner(
-          id: 'free_period',
-          type: SmartBannerType.general,
-          title: 'Free for ${(freeTimeMinutes / 60).toStringAsFixed(1)}h until ${nextClass.entry.course.code}',
-          action: 'Relax',
-          icon: Icons.free_breakfast,
-          urgency: BannerUrgency.low,
-          onTap: () => _showFreeTimeSuggestions(),
-        ));
-      }
-    }
-    
-    // Weekend reminder
-    if (now.weekday == DateTime.saturday || now.weekday == DateTime.sunday) {
-      if (_todaysClasses.isEmpty) {
-        _smartBanners.add(SmartBanner(
-          id: 'weekend_free',
-          type: SmartBannerType.general,
-          title: 'No classes today - enjoy your weekend! 🎉',
-          action: 'OK',
-          icon: Icons.celebration,
-          urgency: BannerUrgency.low,
-          onTap: () => _dismissBanner('weekend_free'),
-        ));
-      }
-    }
-    
-    // Offline mode banner
-    if (!_isOnline) {
-      _smartBanners.add(SmartBanner(
-        id: 'offline_mode',
-        type: SmartBannerType.urgent,
-        title: 'You\'re offline - showing cached schedule',
-        action: 'Retry',
-        icon: Icons.cloud_off,
-        urgency: BannerUrgency.medium,
-        onTap: () => _retryConnection(),
-      ));
-    }
-  }
-
-  bool _needsLocationChange(ClassSession classSession) {
-    // This would typically check against user's current location
-    // For demo purposes, assume location change needed for different buildings
-    final currentLocation = 'Main Building'; // This would come from GPS/last known location
-    return classSession.entry.building != currentLocation;
-  }
-
-  void _prepareForClass(ClassSession classSession) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Get Ready for Class'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Class: ${classSession.entry.course.code}'),
-            Text('Location: ${classSession.entry.room}, ${classSession.entry.building}'),
-            Text('Time: ${_formatTimeRange(classSession.entry.startTime, classSession.entry.endTime)}'),
-            const SizedBox(height: 16),
-            const Text('Quick actions:'),
-            const SizedBox(height: 8),
-            Row(
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.scaffoldBackground,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
               children: [
+                // Offline banner
+                if (_isOffline) _buildOfflineBanner(),
+                
+                // Smart Banners
+                if (_smartBanners.isNotEmpty) _buildSmartBanners(),
+              
+                // Main Content
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _getDirections(classSession);
-                    },
-                    icon: Icon(Icons.directions),
-                    label: Text('Directions'),
-                  ),
+                  child: _isLoading 
+                    ? _buildLoadingState()
+                    : _error != null
+                      ? _buildErrorState()
+                      : _todaysClasses.isEmpty
+                        ? _buildEmptyState()
+                        : _buildMainContent(),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _setReminder(classSession);
-                    },
-                    icon: Icon(Icons.notifications),
-                    label: Text('Remind'),
-                  ),
-                ),
+                
+                // Bottom Navigation
+                _buildBottomNavigation(),
               ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
           ),
+          
+          // Floating Now Class Action Card
+          if (_currentClass != null)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 96,
+              child: AnimatedBuilder(
+                animation: _actionCardAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, (1 - _actionCardAnimation.value) * 100),
+                    child: Opacity(
+                      opacity: _actionCardAnimation.value,
+                      child: _buildNowClassActionCard(),
+                    ),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
   }
 
-  void _getDirections(ClassSession classSession) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Getting directions to ${classSession.entry.building}...'),
-        backgroundColor: AppColors.primary,
-        action: SnackBarAction(
-          label: 'Open Maps',
-          textColor: Colors.white,
-          onPressed: () {
-            // Would integrate with maps app
-          },
-        ),
-      ),
-    );
-  }
-
-  void _prepareForLab(ClassSession classSession) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Lab Preparation'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Lab: ${classSession.entry.course.code}'),
-            Text('Room: ${classSession.entry.room}'),
-            const SizedBox(height: 16),
-            const Text('Reminders:'),
-            const Text('• Bring lab manual'),
-            const Text('• Complete pre-lab assignments'),
-            const Text('• Bring safety equipment'),
-            const Text('• Review lab procedures'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Got it'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showFreeTimeSuggestions() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Free Time Suggestions'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('You have some free time! Consider:'),
-            const SizedBox(height: 12),
-            _buildSuggestionItem(Icons.book, 'Review upcoming lectures'),
-            _buildSuggestionItem(Icons.assignment, 'Work on assignments'),
-            _buildSuggestionItem(Icons.restaurant, 'Get a snack'),
-            _buildSuggestionItem(Icons.group, 'Meet with classmates'),
-            _buildSuggestionItem(Icons.self_improvement, 'Take a break'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Thanks'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSuggestionItem(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+  Widget _buildOfflineBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: AppColors.accent.withValues(alpha: 0.1),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.primary),
+          Icon(
+            Icons.cloud_off,
+            size: 16,
+            color: AppColors.accent,
+          ),
           const SizedBox(width: 8),
-          Text(text),
+          Expanded(
+            child: Text(
+              'You\'re offline — showing cached schedule',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.accent,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  void _retryConnection() {
-    // Simulate connection retry
-    setState(() {
-      _isLoading = true;
-    });
+  Widget _buildSmartBanners() {
+    return Column(
+      children: _smartBanners.map((banner) => _buildSmartBanner(banner)).toList(),
+    );
+  }
+
+  Widget _buildSmartBanner(SmartBanner banner) {
+    Color iconColor;
     
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _isOnline = true; // Simulate successful reconnection
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Connection restored!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    });
-  }
-
-  Widget _buildLoadingState() {
-    return Semantics(
-      label: 'Loading schedule',
-      liveRegion: true,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    switch (banner.urgency) {
+      case BannerUrgency.critical:
+        iconColor = Colors.red;
+        break;
+      case BannerUrgency.high:
+        iconColor = Colors.orange;
+        break;
+      case BannerUrgency.medium:
+        iconColor = AppColors.primary;
+        break;
+      case BannerUrgency.low:
+        iconColor = AppColors.textSecondary;
+        break;
+    }
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: LiquidGlass(
+        borderRadius: 12,
+        padding: const EdgeInsets.all(12),
+        child: Row(
           children: [
-            const SizedBox(height: 20),
-            // Header skeleton
-            Semantics(
-              label: 'Loading header',
-              child: Container(
-                height: 24,
-                width: 200,
-                decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+            Icon(
+              banner.icon,
+              size: 20,
+              color: iconColor,
             ),
-            const SizedBox(height: 32),
-            // Hero card skeleton
-            Semantics(
-              label: 'Loading main class information',
-              child: LiquidGlass.card(
-                height: 200,
-                child: Center(
-                  child: Semantics(
-                    label: 'Loading progress indicator',
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
-                      semanticsLabel: 'Loading your schedule',
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // List skeletons
-            Semantics(
-              label: 'Loading class list',
-              child: Column(
-                children: List.generate(4, (index) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Semantics(
-                    label: 'Loading class ${index + 1}',
-                    child: LiquidGlass(
-                      borderRadius: 16,
-                      height: 80,
-                      child: Container(),
-                    ),
-                  ),
-                )),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorState() {
-    return Semantics(
-      label: 'Error loading schedule',
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Semantics(
-              label: 'Error icon',
-              child: Icon(
-                Icons.error_outline,
-                size: 64,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Semantics(
-              header: true,
-              liveRegion: true,
+            const SizedBox(width: 12),
+            Expanded(
               child: Text(
-                _error!,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                banner.title,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textPrimary,
+                  fontWeight: banner.urgency == BannerUrgency.critical 
+                    ? FontWeight.w700 
+                    : FontWeight.w500,
                 ),
-                textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 24),
-            Semantics(
-              button: true,
-              label: 'Retry loading schedule',
-              child: LiquidGlass.pill(
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _loadTodayData,
-                    borderRadius: BorderRadius.circular(26),
-                    child: Container(
-                      height: 52,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.refresh,
-                            size: 20,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Retry',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+            if (banner.action.isNotEmpty) ...[
+              TextButton(
+                onPressed: banner.onTap,
+                child: Text(
+                  banner.action,
+                  style: TextStyle(
+                    color: iconColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
+            ],
+            IconButton(
+              onPressed: () => _dismissBanner(banner.id),
+              icon: Icon(
+                Icons.close,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
+              tooltip: 'Dismiss',
             ),
           ],
         ),
@@ -1135,113 +711,12 @@ class _TodayPageState extends State<TodayPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Semantics(
-      label: 'No classes today',
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Semantics(
-              label: 'Calendar icon',
-              child: Icon(
-                Icons.today_outlined,
-                size: 80,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Semantics(
-              header: true,
-              child: Text(
-                'No classes scheduled today',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Enjoy your free day!',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            Semantics(
-              button: true,
-              label: 'View full timetable',
-              child: LiquidGlass.pill(
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _openTimetable(),
-                    borderRadius: BorderRadius.circular(26),
-                    child: Container(
-                      height: 52,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.calendar_view_week,
-                            size: 20,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'View Week',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMainContent() {
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-            child: _buildHeader(),
-          ),
-        ),
-        if (_heroClass != null)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              child: _buildHeroCard(_heroClass!),
-            ),
-          ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-            child: _buildClassesList(Theme.of(context)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeader() {
-    return Semantics(
-      header: true,
+  Widget _buildNowClassActionCard() {
+    if (_currentClass == null) return const SizedBox.shrink();
+    
+    return LiquidGlass(
+      borderRadius: 20,
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           Expanded(
@@ -1249,54 +724,40 @@ class _TodayPageState extends State<TodayPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Today · ${_getTodayDateString()}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  '${_currentClass!.entry.course.code} • ${_formatTimeRange(_currentClass!.entry.startTime, _currentClass!.entry.endTime)}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (!_isTimezoneMatch)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      'Times shown in ${_userPreferences.timezone}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  '${_currentClass!.entry.room}, ${_currentClass!.entry.building}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
                   ),
+                ),
               ],
             ),
           ),
-          LiquidGlass.pill(
-            height: 40,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _openTimetable,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.calendar_view_week,
-                        size: 16,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'View Week',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: () => _openClassDetails(_currentClass!),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Details',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
@@ -1305,103 +766,199 @@ class _TodayPageState extends State<TodayPage> {
     );
   }
 
-  Widget _buildHeroCard(ClassSession heroClass) {
-    final isNow = heroClass.status == ClassStatus.now;
-    final progress = isNow ? _calculateProgress(heroClass) : 0.0;
-    final canApplyLeave = _canApplyLeave(heroClass);
-    final canSwapClass = _canSwapClass(heroClass);
-    
-    return LiquidGlass.card(
+  Widget _buildMainContent() {
+    return CustomScrollView(
+      slivers: [
+        // Header
+        SliverToBoxAdapter(
+          child: _buildHeader(),
+        ),
+        
+        // Hero Class Card
+        if (_heroClass != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: _buildHeroClassCard(),
+            ),
+          ),
+        
+        // Today's Classes List
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildClassesList(),
+          ),
+        ),
+        
+        // Bottom spacing for action card
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 100),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with course info and status
           Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${heroClass.entry.course.code} • ${heroClass.entry.course.name}',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${heroClass.entry.section} • ${heroClass.entry.semester} Semester',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _buildStatusChip(heroClass, Theme.of(context)),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Time and location details
-          Row(
-            children: [
-              Icon(
-                Icons.schedule,
-                size: 16,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _formatTimeRange(heroClass.entry.startTime, heroClass.entry.endTime),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Icon(
-                Icons.location_on,
-                size: 16,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${heroClass.entry.room}, ${heroClass.entry.building}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  'Today · ${_getTodayDateString()}',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Roboto Serif',
+                  ),
+                ),
+              ),
+              LiquidGlass(
+                borderRadius: 12,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: InkWell(
+                  onTap: _openTimetable,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_view_week,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'View Week',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
           
-          const SizedBox(height: 12),
+          // Timezone hint
+          if (!_isTimezoneMatch) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Times shown in ${_userPreferences.timezone}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroClassCard() {
+    if (_heroClass == null) return const SizedBox.shrink();
+    
+    final heroClass = _heroClass!;
+    final isNow = heroClass.status == ClassStatus.now;
+    final progress = isNow ? _calculateProgress(heroClass) : 0.0;
+    final canApplyLeave = _canApplyLeave(heroClass);
+    final canSwapClass = _canSwapClass(heroClass);
+    
+    return LiquidGlass(
+      borderRadius: 24,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Course code + name (bold)
+          Text(
+            '${heroClass.entry.course.code} • ${heroClass.entry.course.name}',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Roboto Serif',
+            ),
+          ),
           
-          // Course type and special flags
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
+          const SizedBox(height: 8),
+          
+          // Section • Semester (lighter)
+          Text(
+            '${heroClass.entry.section} • ${heroClass.entry.semester} Semester',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Row: time range + location
+          Row(
             children: [
-              _buildCourseTypeChip(heroClass.entry.course.courseType),
-              if (heroClass.entry.isGuest) _buildSpecialChip('Guest', Icons.person),
-              if (heroClass.entry.isOnline) _buildSpecialChip('Online', Icons.videocam),
-              if (heroClass.entry.isSpecial) _buildSpecialChip('Special', Icons.star),
+              Icon(
+                Icons.schedule,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatTimeRange(heroClass.entry.startTime, heroClass.entry.endTime),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 20),
+              Icon(
+                Icons.location_on,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${heroClass.entry.room}, ${heroClass.entry.building}',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ],
           ),
           
-          // Time remaining and progress
+          const SizedBox(height: 16),
+          
+          // Chips: Course type + optional flags
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildAccessibleCourseTypeChip(heroClass.entry.course.courseType),
+              if (heroClass.entry.isGuest) _buildAccessibleFlagChip('Guest', Icons.person, Colors.blue),
+              if (heroClass.entry.isOnline) _buildAccessibleFlagChip('Online', Icons.videocam, Colors.green),
+              if (heroClass.entry.isSpecial) _buildAccessibleFlagChip('Special', Icons.star, Colors.orange),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Status with progress bar
           if (heroClass.timeRemaining != null) ...[
-            const SizedBox(height: 12),
             Row(
               children: [
                 Icon(
                   isNow ? Icons.timelapse : Icons.access_time,
-                  size: 16,
+                  size: 18,
                   color: AppColors.primary,
                 ),
                 const SizedBox(width: 8),
@@ -1409,78 +966,73 @@ class _TodayPageState extends State<TodayPage> {
                   heroClass.statusText,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
-          ],
-          
-          // Progress bar for current class
-          if (isNow && progress > 0) ...[
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: progress,
-                backgroundColor: AppColors.textSecondary.withOpacity(0.2),
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                minHeight: 4,
-                semanticsLabel: 'Class progress: ${(progress * 100).round()}%',
+            
+            // Thin gold progress bar when in-progress
+            if (isNow && progress > 0) ...[
+              const SizedBox(height: 8),
+              AnimatedBuilder(
+                animation: _heroProgressAnimation,
+                builder: (context, child) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: progress * _heroProgressAnimation.value,
+                      backgroundColor: Colors.amber.withValues(alpha: 0.2),
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                      minHeight: 3,
+                    ),
+                  );
+                },
               ),
-            ),
+            ],
+            
+            const SizedBox(height: 20),
           ],
           
-          const SizedBox(height: 20),
-          
-          // Primary action buttons
+          // Primary Actions (NO 3-dot menu on Hero)
           Row(
             children: [
               Expanded(
-                child: _buildActionButton(
+                child: _buildHeroActionButton(
                   'Apply Leave',
                   Icons.event_busy,
                   canApplyLeave ? () => _applyLeave(heroClass) : null,
-                  isPrimary: true,
-                  tooltip: canApplyLeave ? 'Apply for leave' : 'Cannot apply leave for this class',
+                  tooltip: canApplyLeave ? 'Apply for leave for this class' : _getLeaveDisabledReason(heroClass),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildActionButton(
+                child: _buildHeroActionButton(
                   'Swap Class',
                   Icons.sync_alt,
                   canSwapClass ? () => _swapClass(heroClass) : null,
-                  isPrimary: false,
-                  tooltip: canSwapClass ? 'Request class swap' : 'Cannot swap this class',
+                  tooltip: canSwapClass ? 'Request to swap this class' : _getSwapDisabledReason(heroClass),
                 ),
               ),
             ],
           ),
           
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           
-          // Secondary action icons
+          // Secondary icons: Open in Week, Remind me
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildSecondaryAction(
-                Icons.info_outline, 
-                'Details', 
-                () => _openClassDetails(heroClass),
-                'View class details',
+              _buildHeroSecondaryAction(
+                Icons.calendar_view_week,
+                'Open in Week',
+                () => _openInWeek(heroClass),
               ),
-              _buildSecondaryAction(
-                Icons.notifications_none, 
-                'Remind', 
+              const SizedBox(width: 32),
+              _buildHeroSecondaryAction(
+                Icons.notifications_none,
+                'Remind me',
                 () => _setReminder(heroClass),
-                'Set reminder',
-              ),
-              _buildSecondaryAction(
-                Icons.calendar_view_week, 
-                'Timetable', 
-                () => _openTimetable(),
-                'Open in timetable',
               ),
             ],
           ),
@@ -1489,7 +1041,423 @@ class _TodayPageState extends State<TodayPage> {
     );
   }
 
-  Widget _buildStatusChip(ClassSession classSession, ThemeData theme) {
+  Widget _buildAccessibleCourseTypeChip(String courseType) {
+    Color chipColor = _getCourseTypeColor(courseType);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: chipColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: chipColor.withValues(alpha: 0.4),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        courseType,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: chipColor,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccessibleFlagChip(String label, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.4),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroActionButton(
+    String label,
+    IconData icon,
+    VoidCallback? onPressed,
+    {String? tooltip}
+  ) {
+    final button = ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: onPressed != null ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.3),
+        foregroundColor: Colors.white,
+        elevation: onPressed != null ? 2 : 0,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+
+    return tooltip != null
+        ? Tooltip(
+            message: tooltip,
+            child: button,
+          )
+        : button;
+  }
+
+  Widget _buildHeroSecondaryAction(IconData icon, String label, VoidCallback onPressed) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getLeaveDisabledReason(ClassSession classSession) {
+    final now = TimeOfDay.now();
+    final currentMinutes = now.hour * 60 + now.minute;
+    final startMinutes = classSession.entry.startTime.hour * 60 + classSession.entry.startTime.minute;
+    
+    if (startMinutes <= currentMinutes) {
+      return 'Leave cannot be applied for ongoing or past classes';
+    } else if (startMinutes - currentMinutes < 15) {
+      return 'Leave requests require at least 15 minutes notice';
+    }
+    return 'Leave application unavailable';
+  }
+
+  String _getSwapDisabledReason(ClassSession classSession) {
+    final now = TimeOfDay.now();
+    final currentMinutes = now.hour * 60 + now.minute;
+    final startMinutes = classSession.entry.startTime.hour * 60 + classSession.entry.startTime.minute;
+    
+    if (startMinutes <= currentMinutes) {
+      return 'Class swaps not available for ongoing or past classes';
+    } else if (startMinutes - currentMinutes < 15) {
+      return 'Class swaps require at least 15 minutes notice';
+    }
+    return 'Class swap unavailable';
+  }
+
+  void _openInWeek(ClassSession classSession) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Opening ${classSession.entry.course.code} in weekly view...'),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
+
+  Widget _buildClassesList() {
+    // Filter out the current class (shown in hero card)
+    final displayClasses = _todaysClasses.where((c) => c != _currentClass).toList();
+    
+    if (displayClasses.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        
+        // Upcoming Classes Section
+        if (_upcomingClasses.where((c) => c != _currentClass).isNotEmpty) ...[
+          _buildSectionHeader('Upcoming'),
+          const SizedBox(height: 12),
+          ..._upcomingClasses.where((c) => c != _currentClass).map((classSession) =>
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildUpcomingClassCard(classSession),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+        
+        // Completed Classes Section
+        if (_completedClasses.isNotEmpty) ...[
+          _buildSectionHeader('Completed'),
+          const SizedBox(height: 12),
+          ..._completedClasses.map((classSession) =>
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildCompletedClassCard(classSession),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w700,
+        fontSize: 18,
+      ),
+    );
+  }
+
+  Widget _buildUpcomingClassCard(ClassSession classSession) {
+    final canApplyLeave = _canApplyLeave(classSession);
+    final canSwapClass = _canSwapClass(classSession);
+    
+    return LiquidGlass(
+      borderRadius: 16,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Line 1: Code • Name
+                Text(
+                  '${classSession.entry.course.code} • ${classSession.entry.course.name}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                
+                // Line 2: Time — Room, trailing Course-type chip
+                Row(
+                  children: [
+                    Text(
+                      '${_formatTimeRange(classSession.entry.startTime, classSession.entry.endTime)} — ${classSession.entry.room}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildCourseTypeChip(classSession.entry.course.courseType),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Status pill and 3-dot menu
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildStatusChip(classSession),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.more_vert,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
+                onSelected: (value) => _handleClassMenuAction(value, classSession),
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    value: 'apply_leave',
+                    enabled: canApplyLeave,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.event_busy,
+                          size: 18,
+                          color: canApplyLeave ? AppColors.primary : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Apply Leave',
+                              style: TextStyle(
+                                color: canApplyLeave ? AppColors.textPrimary : AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (!canApplyLeave)
+                              Text(
+                                _getLeaveDisabledReason(classSession),
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'swap_class',
+                    enabled: canSwapClass,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.sync_alt,
+                          size: 18,
+                          color: canSwapClass ? AppColors.primary : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Swap Class',
+                              style: TextStyle(
+                                color: canSwapClass ? AppColors.textPrimary : AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (!canSwapClass)
+                              Text(
+                                _getSwapDisabledReason(classSession),
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'details',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Details',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletedClassCard(ClassSession classSession) {
+    return LiquidGlass(
+      borderRadius: 16,
+      padding: const EdgeInsets.all(16),
+      child: InkWell(
+        onTap: () => _openClassDetails(classSession),
+        borderRadius: BorderRadius.circular(16),
+        child: Opacity(
+          opacity: 0.7,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${classSession.entry.course.code} • ${classSession.entry.course.name}',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Text(
+                          '${_formatTimeRange(classSession.entry.startTime, classSession.entry.endTime)} — ${classSession.entry.room}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCourseTypeChip(classSession.entry.course.courseType),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              _buildStatusChip(classSession),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleClassMenuAction(String action, ClassSession classSession) {
+    switch (action) {
+      case 'apply_leave':
+        _applyLeave(classSession);
+        break;
+      case 'swap_class':
+        _swapClass(classSession);
+        break;
+      case 'details':
+        _openClassDetails(classSession);
+        break;
+    }
+  }
+
+  Widget _buildStatusChip(ClassSession classSession) {
     Color chipColor;
     String text;
     
@@ -1511,265 +1479,82 @@ class _TodayPageState extends State<TodayPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: chipColor.withOpacity(0.1),
+        color: chipColor.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: chipColor.withOpacity(0.3),
+          color: chipColor.withValues(alpha: 0.4),
           width: 1,
         ),
       ),
       child: Text(
         text,
-        style: theme.textTheme.bodySmall?.copyWith(
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: chipColor,
           fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCourseTypeChip(String courseType) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.textSecondary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.textSecondary.withOpacity(0.2)),
-      ),
-      child: Text(
-        courseType,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: AppColors.textSecondary,
-          fontWeight: FontWeight.w500,
           fontSize: 11,
         ),
       ),
     );
   }
 
-  Widget _buildSpecialChip(String label, IconData icon) {
+  Widget _buildCourseTypeChip(String courseType) {
+    final chipColor = _getCourseTypeColor(courseType);
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 12,
-            color: AppColors.accent,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.accent,
-              fontWeight: FontWeight.w500,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-    String label,
-    IconData icon,
-    VoidCallback? onPressed,
-    {required bool isPrimary, String? tooltip}
-  ) {
-    final button = isPrimary
-        ? ElevatedButton.icon(
-            onPressed: onPressed,
-            icon: Icon(icon, size: 16),
-            label: Text(label),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: onPressed != null ? AppColors.primary : AppColors.textSecondary.withOpacity(0.3),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          )
-        : OutlinedButton.icon(
-            onPressed: onPressed,
-            icon: Icon(icon, size: 16),
-            label: Text(label),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: onPressed != null ? AppColors.primary : AppColors.textSecondary,
-              side: BorderSide(
-                color: onPressed != null ? AppColors.primary : AppColors.textSecondary.withOpacity(0.3),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-
-    return tooltip != null
-        ? Tooltip(
-            message: tooltip,
-            child: button,
-          )
-        : button;
-  }
-
-  Widget _buildSecondaryAction(IconData icon, String label, VoidCallback onPressed, String tooltip) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onPressed,
+        color: chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        child: Semantics(
-          button: true,
-          label: tooltip,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        border: Border.all(
+          color: chipColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        courseType,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: chipColor,
+          fontWeight: FontWeight.w600,
+          fontSize: 10,
         ),
       ),
     );
   }
 
-  Widget _buildClassesList(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Today\'s Classes',
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ..._todaysClasses.map((classSession) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildClassRow(classSession, theme),
-        )),
-      ],
-    );
-  }
-
-  Widget _buildClassRow(ClassSession classSession, ThemeData theme) {
-    return LiquidGlass(
-      borderRadius: 16,
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${classSession.entry.course.code} • ${classSession.entry.course.name}',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatTimeRange(classSession.entry.startTime, classSession.entry.endTime),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${classSession.entry.room}, ${classSession.entry.building}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-            Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _buildStatusChip(classSession, theme),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getCourseTypeColor(classSession.entry.course.courseType).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  classSession.entry.course.courseType,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: _getCourseTypeColor(classSession.entry.course.courseType),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10,
-                  ),
-                ),
+  Widget _buildBottomNavigation() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: LiquidGlass(
+        borderRadius: 30,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Container(
+          height: 60,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Color _getCourseTypeColor(String courseType) {
-    switch (courseType.toLowerCase()) {
-      case 'theory':
-        return Colors.blue;
-      case 'lab':
-        return Colors.purple;
-      case 'project':
-        return Colors.green;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
-
-  Widget _buildBottomNavigation(ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      child: LiquidGlass.pill(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildNavItem(Icons.today, 'Today', true, theme),
-            _buildNavItem(Icons.calendar_view_week, 'Week', false, theme),
-            _buildNavItem(Icons.schedule, 'Schedule', false, theme),
-            _buildNavItem(Icons.inbox, 'Inbox', false, theme),
-            _buildNavItem(Icons.person, 'Profile', false, theme),
-          ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildNavItem(Icons.today, 'Today', true),
+              _buildNavItem(Icons.calendar_view_week, 'Week', false),
+              _buildNavItem(Icons.schedule, 'Schedule', false),
+              _buildNavItem(Icons.inbox, 'Inbox', false),
+              _buildNavItem(Icons.person, 'Profile', false),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isActive, ThemeData theme) {
+  Widget _buildNavItem(IconData icon, String label, bool isActive) {
     return GestureDetector(
       onTap: () => _handleNavTap(label),
       child: Container(
@@ -1777,6 +1562,13 @@ class _TodayPageState extends State<TodayPage> {
         decoration: isActive ? BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ) : null,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1791,7 +1583,7 @@ class _TodayPageState extends State<TodayPage> {
               label,
               style: TextStyle(
                 fontSize: 10,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
                 color: isActive ? Colors.white : AppColors.textSecondary,
               ),
             ),
@@ -1801,55 +1593,168 @@ class _TodayPageState extends State<TodayPage> {
     );
   }
 
+  Widget _buildLoadingState() {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _error ?? 'Something went wrong',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadTodayData,
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.event_note,
+            size: 64,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No classes scheduled today',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _openTimetable,
+            icon: const Icon(Icons.calendar_view_week),
+            label: const Text('View Week'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _openTimetable() {
+    // Navigate to timetable/week view
+    // For now, show a more informative message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Opening timetable...'),
+        content: const Text('Timetable feature coming soon...'),
         backgroundColor: AppColors.primary,
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
       ),
     );
   }
 
   void _applyLeave(ClassSession classSession) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Apply leave for ${classSession.entry.course.code}'),
-        backgroundColor: AppColors.primary,
+    // Show a proper dialog for leave application
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Apply for Leave'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Course: ${classSession.entry.course.code}'),
+            Text('Time: ${_formatTimeRange(classSession.entry.startTime, classSession.entry.endTime)}'),
+            Text('Date: ${_getTodayDateString()}'),
+            const SizedBox(height: 16),
+            const Text('This will submit a leave request to the department.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Leave request submitted for ${classSession.entry.course.code}'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: const Text('Submit Request'),
+          ),
+        ],
       ),
     );
   }
 
   void _swapClass(ClassSession classSession) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Swap class for ${classSession.entry.course.code}'),
-        backgroundColor: AppColors.primary,
+    // Show a proper dialog for class swap
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Request Class Swap'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Course: ${classSession.entry.course.code}'),
+            Text('Current Time: ${_formatTimeRange(classSession.entry.startTime, classSession.entry.endTime)}'),
+            Text('Date: ${_getTodayDateString()}'),
+            const SizedBox(height: 16),
+            const Text('This will request to swap this class with another available slot.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Swap request submitted for ${classSession.entry.course.code}'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            },
+            child: const Text('Submit Request'),
+          ),
+        ],
       ),
     );
-  }
-
-  double _calculateProgress(ClassSession classSession) {
-    if (classSession.status != ClassStatus.now) return 0.0;
-    
-    final now = DateTime.now();
-    final start = classSession.entry.startTime;
-    final end = classSession.entry.endTime;
-    
-    // Create DateTime objects for today with class times
-    final startToday = DateTime(now.year, now.month, now.day, start.hour, start.minute);
-    final endToday = DateTime(now.year, now.month, now.day, end.hour, end.minute);
-    
-    final totalDuration = endToday.difference(startToday).inMinutes;
-    final elapsed = now.difference(startToday).inMinutes;
-    
-    return elapsed / totalDuration;
   }
 
   void _openClassDetails(ClassSession classSession) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Class Details'),
+        title: const Text('Class Details'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1867,7 +1772,7 @@ class _TodayPageState extends State<TodayPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Close'),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -1875,30 +1780,117 @@ class _TodayPageState extends State<TodayPage> {
   }
 
   void _setReminder(ClassSession classSession) {
-    if (!_userPreferences.isDndEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Reminder set for ${classSession.entry.course.code}'),
-          backgroundColor: AppColors.primary,
+    // Show reminder options dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set Reminder'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Course: ${classSession.entry.course.code}'),
+            Text('Time: ${_formatTimeRange(classSession.entry.startTime, classSession.entry.endTime)}'),
+            const SizedBox(height: 16),
+            const Text('Choose reminder time:'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                _buildReminderOption('5 min before', 5, classSession),
+                _buildReminderOption('10 min before', 10, classSession),
+                _buildReminderOption('15 min before', 15, classSession),
+              ],
+            ),
+            if (_userPreferences.isDndEnabled) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.do_not_disturb, color: Colors.orange, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Do Not Disturb is enabled. Reminder may not notify.',
+                        style: TextStyle(color: Colors.orange, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Do Not Disturb is enabled. Reminder not set.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-    }
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReminderOption(String label, int minutes, ClassSession classSession) {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Reminder set for $minutes minutes before ${classSession.entry.course.code}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+        foregroundColor: AppColors.primary,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+      child: Text(label, style: const TextStyle(fontSize: 12)),
+    );
   }
 
   void _handleNavTap(String section) {
     if (section == 'Today') return;
     
+    // Provide better feedback for navigation
+    String message = '';
+    switch (section) {
+      case 'Week':
+        message = 'Weekly timetable view';
+        break;
+      case 'Schedule':
+        message = 'Full schedule management';
+        break;
+      case 'Inbox':
+        message = 'Notifications and messages';
+        break;
+      case 'Profile':
+        message = 'Profile and settings';
+        break;
+      default:
+        message = section;
+    }
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Opening $section...'),
+        content: Text('$message - Coming soon'),
         backgroundColor: AppColors.primary,
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
       ),
     );
   }
