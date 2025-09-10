@@ -1,0 +1,329 @@
+# SRET App Design System Documentation
+
+## **🎨 Color Scheme**
+
+### **Primary Color Palette**
+```dart
+// Core Brand Colors
+AppColors.primary = Color(0xFF8B4513)        // Saddle Brown
+AppColors.burgundy = Color(0xFF800020)       // Deep Burgundy/Maroon
+AppColors.beige = Color(0xFFF5F5DC)         // Light Beige
+AppColors.sand = Color(0xFFF4A460)          // Sandy Brown
+
+// UI Colors
+AppColors.textPrimary = Color(0xFF2C2C2C)   // Dark Gray Text
+AppColors.textSecondary = Color(0xFF666666) // Medium Gray Text
+AppColors.textTertiary = Color(0xFF999999)  // Light Gray Text
+```
+
+### **Theme Colors**
+```dart
+// AppTheme Color Extensions
+AppTheme.burgundy = Color(0xFF800020)        // Burgundy Accent
+AppTheme.beige = Color(0xFFF5F5DC)          // Beige Background
+AppTheme.sand = Color(0xFFF4A460)           // Sand Accent
+```
+
+### **Semantic Colors**
+```dart
+// Status Colors
+Colors.green          // Success states
+Colors.red            // Error/Alert states
+Colors.orange         // Warning states
+Colors.blue           // Information states
+
+// Transparency Levels
+Colors.white70        // 70% opacity white
+Colors.white54        // 54% opacity white
+Colors.black26        // 26% opacity black
+Colors.black12        // 12% opacity black
+```
+
+## **🎯 Design Scheme**
+
+### **Design Philosophy**
+- **Elegant Minimalism**: Clean, uncluttered interfaces
+- **Liquid Glass Aesthetic**: Frosted glass effects with smooth transitions
+- **Academic Professionalism**: Sophisticated yet approachable
+- **Warm Earth Tones**: Burgundy and beige creating trust and stability
+
+### **Visual Hierarchy**
+```dart
+// Typography Scale
+TextTheme.displayLarge    // 57sp - Major headings
+TextTheme.displayMedium   // 45sp - Section headers
+TextTheme.displaySmall    // 36sp - Page titles
+TextTheme.headlineLarge   // 32sp - Card titles
+TextTheme.headlineMedium  // 28sp - Component headers
+TextTheme.headlineSmall   // 24sp - Subsection titles
+TextTheme.titleLarge      // 22sp - List item titles
+TextTheme.titleMedium     // 16sp - Button text
+TextTheme.titleSmall      // 14sp - Captions
+TextTheme.bodyLarge       // 16sp - Body text
+TextTheme.bodyMedium      // 14sp - Secondary text
+TextTheme.bodySmall       // 12sp - Helper text
+```
+
+### **Spacing System**
+```dart
+// Consistent Spacing Units
+EdgeInsets.all(4)     // Micro spacing
+EdgeInsets.all(8)     // Small spacing
+EdgeInsets.all(12)    // Medium-small spacing
+EdgeInsets.all(16)    // Medium spacing
+EdgeInsets.all(20)    // Large spacing
+EdgeInsets.all(24)    // Extra-large spacing
+EdgeInsets.all(32)    // Section spacing
+```
+
+### **Border Radius System**
+```dart
+BorderRadius.circular(4)   // Subtle rounding
+BorderRadius.circular(8)   // Standard rounding
+BorderRadius.circular(12)  // Medium rounding
+BorderRadius.circular(16)  // Card rounding
+BorderRadius.circular(20)  // Button rounding
+BorderRadius.circular(24)  // Prominent rounding
+BorderRadius.circular(30)  // Navigation rounding
+BorderRadius.circular(32)  // Full rounding
+```
+
+## **🧩 Widget Scheme**
+
+### **Navigation Components**
+```dart
+// Primary Navigation
+GlassPillNav {
+  // Glass effect navigation bar
+  borderRadius: 30-32px
+  background: Liquid glass with blur
+  colors: Burgundy accent with white text
+  shadow: Soft elevation
+}
+
+GlassPillNavMixin {
+  // Navigation state management
+  selectedIndex: Active page tracking
+  navItems: Route configuration
+  handleNavTap: Navigation logic
+}
+
+// Alternative Navigation
+BottomNavCapsule {
+  // Legacy navigation option
+  style: Material capsule design
+  background: Solid colors
+}
+```
+
+### **Glass Effect Components**
+```dart
+LiquidGlass {
+  // Core glass effect widget
+  blur: Backdrop filter blur
+  opacity: Semi-transparent overlay
+  border: Subtle border highlight
+  shadow: Depth simulation
+}
+
+GlassChip {
+  // Glass effect chips/tags
+  background: Frosted glass
+  border: Rounded corners
+  text: High contrast
+}
+
+ActionBarPill {
+  // Glass action buttons
+  shape: Pill-shaped
+  background: Glass effect
+  interactions: Ripple effects
+}
+```
+
+### **Content Display Components**
+```dart
+// Card System
+Container + BoxDecoration {
+  borderRadius: 12-16px
+  boxShadow: [
+    BoxShadow(
+      color: Primary.withOpacity(0.15)
+      blurRadius: 8
+      offset: Offset(0, 2)
+    )
+  ]
+  background: White/Beige gradient
+}
+
+// Text Components
+Text {
+  fontFamily: GoogleFonts (Inter/Roboto)
+  fontWeight: 400-700 range
+  color: Semantic color system
+  overflow: TextOverflow.ellipsis
+}
+
+// Icon System
+Icon {
+  size: 16-24px standard
+  color: Primary/Burgundy
+  semantics: Consistent meaning
+}
+```
+
+### **Interactive Components**
+```dart
+// Button System
+GestureDetector / InkWell {
+  onTap: Navigation/Actions
+  borderRadius: Matching container
+  splashColor: Primary.withOpacity(0.2)
+  highlightColor: Primary.withOpacity(0.1)
+}
+
+// Input Components
+Container + TextFormField {
+  decoration: InputDecoration(
+    border: OutlineInputBorder
+    borderRadius: 12px
+    focusedBorder: Primary color
+    fillColor: Light background
+  )
+}
+```
+
+### **Layout Components**
+```dart
+// Page Structure
+Scaffold {
+  backgroundColor: Gradient(beige to sand)
+  appBar: Transparent or themed
+  body: Padded content area
+  bottomNavigationBar: GlassPillNav
+}
+
+// Content Layout
+Column / Row {
+  mainAxisAlignment: Logical spacing
+  crossAxisAlignment: Consistent alignment
+  children: Spaced components
+}
+
+SingleChildScrollView {
+  padding: EdgeInsets.all(24)
+  physics: BouncingScrollPhysics
+}
+```
+
+### **Specialized Components**
+```dart
+// Today Page Components
+TodayHeaderNew {
+  background: Gradient overlay
+  userInfo: CircleAvatar + greeting
+  actions: Notification button
+}
+
+ScheduleOverview {
+  layout: Horizontal scroll cards
+  styling: Glass effect containers
+  content: Time-based class info
+}
+
+// HOD Dashboard Components
+KpiCard {
+  layout: Metric display cards
+  styling: Glass containers
+  interactions: Tap for details
+}
+
+OngoingClassesCard {
+  content: Live class information
+  styling: Status indicators
+  actions: Management options
+}
+```
+
+## **🎨 Visual Effects System**
+
+### **Glass Effects**
+```dart
+// Backdrop Blur
+BackdropFilter(
+  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10)
+  child: Container(
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.2)
+      border: Border.all(
+        color: Colors.white.withOpacity(0.3)
+      )
+      borderRadius: BorderRadius.circular(radius)
+    )
+  )
+)
+```
+
+### **Gradient System**
+```dart
+// Background Gradients
+LinearGradient(
+  begin: Alignment.topLeft
+  end: Alignment.bottomRight
+  colors: [
+    AppTheme.beige,
+    AppTheme.sand.withOpacity(0.8)
+  ]
+)
+
+// Accent Gradients
+LinearGradient(
+  colors: [
+    AppColors.burgundy,
+    AppColors.primary
+  ]
+)
+```
+
+### **Shadow System**
+```dart
+// Card Shadows
+BoxShadow(
+  color: AppColors.primary.withOpacity(0.15)
+  blurRadius: 8
+  offset: Offset(0, 2)
+)
+
+// Elevated Shadows
+BoxShadow(
+  color: Colors.black26
+  blurRadius: 12
+  offset: Offset(0, 4)
+)
+```
+
+## **📱 Responsive Design**
+
+### **Screen Adaptations**
+```dart
+// Breakpoints
+Mobile: < 600px width
+Tablet: 600px - 1024px width
+Desktop: > 1024px width
+
+// Adaptive Spacing
+MediaQuery.of(context).size.width > 600 
+  ? EdgeInsets.all(32) 
+  : EdgeInsets.all(16)
+```
+
+### **Component Scaling**
+```dart
+// Responsive Icons
+IconSize = screenWidth > 600 ? 24.0 : 20.0
+
+// Responsive Text
+TextScaleFactor = MediaQuery.of(context).textScaleFactor
+```
+
+This design system ensures consistency across all components while maintaining the elegant, professional aesthetic suitable for an academic management application. The burgundy and beige color scheme creates a warm, trustworthy environment while the liquid glass effects add modern sophistication.
