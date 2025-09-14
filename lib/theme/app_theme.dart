@@ -155,3 +155,8 @@ class AppTheme {
     );
   }
 }
+
+extension AppThemeExtension on AppTheme {
+  static Color get beige => AppColors.scaffoldBackground;
+  static Color get sand => AppColors.surface;
+}

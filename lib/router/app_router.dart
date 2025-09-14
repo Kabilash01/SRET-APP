@@ -5,6 +5,7 @@ import '../pages/auth/reset_password_page.dart';
 import '../pages/today_page.dart';
 import '../pages/profile_page.dart';
 import '../features/hod/pages/hod_dashboard_page.dart';
+import '../features/timetable/pages/timetable_page.dart';
 import '../widgets/glass_pill_nav.dart';
 import '../theme/app_theme.dart';
 
@@ -39,7 +40,7 @@ class AppRouter {
       // Placeholder routes for remaining navigation items
       GoRoute(
         path: '/timetable',
-        builder: (context, state) => const _PlaceholderPage(title: 'Timetable', index: 1),
+        builder: (context, state) => const TimetablePage(),
       ),
       GoRoute(
         path: '/calendar',
